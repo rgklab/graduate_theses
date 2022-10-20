@@ -1,0 +1,164 @@
+    \begin{manualtheorem}{1}[Disagreement implies covariate shift]
+    Let $f$ be a classifier trained on dataset $\boldP$ consisting of $N$ samples drawn identically from $\Pc$ and their corresponding labels.
+    Let $g$ be a classifier that is observed to agree (classify identically) with $f$ on $\boldP$ but and disagree on a dataset $\boldQ$ drawn from $\Qc$.
+    If the rate which $g$ disagrees with $f$ on $n$ unseen samples from $\Qc$ is greater then that from $n$ unseen samples from $\Pc$ w.p greater than $p^\star \coloneqq \frac{1}{2}\left(1- 4^{-n} \binom{2n}{n}\right)$ there must be covariate shift.
+\end{manualtheorem}
+\begin{proof}
+    Let $R_P=\emptyset^{P}_1+ \ldots+ \emptyset^P_n$ where each $\emptyset^P_i$ is an i.i.d Bernoulli random variable that describes the probability of $g$ disagreeing with $f$ on an unseen sample from $\Pc$.
+    Additionally, let $R_Q=\emptyset^Q_1+ \ldots+ \emptyset^Q_n$ be defined similarly for $\Qc$.
+    If $\Pc$ and $\Qc$ are equal then $\emptyset^P_i$ and $\emptyset^Q_i$ are equal by definition and the probability of observing $R_Q >R_P$ is tightly bounded by \autoref{eq:bound}.
+    This is the tightest upper bound that is not a function of $\mathbb{E}[\emptyset^P_i]$, the proof can be found in Lemma \autoref{lemma:bound}.
+
+    \begin{equation}
+        \mathcal{P=Q} \implies \mathbb{P}\left(R_Q > R_P \right) \leq \frac{1}{2} \left(1-4^{-n} \binom{2 n}{n}\right) = \frac{1}{2} - O\left(\frac{1}{\sqrt{n}}\right)
+        \label{eq:bound}
+    \end{equation}
+
+
+    The more helpful contrapositive statement says that if it is sufficiently likely that $R_Q>R_P$, then covariate distributions $\Pc$ and $\Qc$ must not be equal.
+
+    \begin{equation}
+        \mathbb{P}\left(R_Q > R_P \right) > \frac{1}{2} \left(1-4^{-n} \binom{2 n}{n}\right) \implies \mathcal{P\neq Q}
+        \label{eq:th1result}
+    \end{equation}
+
+    This result naturally lends itself to identifying $\mathcal{P\neq Q}$ by rejecting an exact statistical hypothesis that $R_Q=R_P$ in favor of the alternative $R_Q>R_P$.
+\end{proof}
+
+\begin{lemma}
+    \label{lemma:bound}
+    Let $X$ and $Y$ be iid binomial random variables with distribution $\text{Bin}(n,p)$ then for all $n\in \mathbb{Z}\geq 0$:
+    \begin{equation}
+        P(X>Y) \leq \frac{1}{2}\left(1-4^{-n} \binom{2n}{n} \right) < \frac{1}{2}
+        \label{eq:boundresult}
+    \end{equation}
+    Furthermore, \cref{eq:boundresult} is the tightest possible bound that does not depend on $p$.
+\end{lemma}
+\begin{proof}
+    Let $Z$ be the distribution $X-Y$, while $Z$ itself is intractable to write down for arbitrary $n$, the characteristic function takes a convenient form
+    \begin{align}
+        \phi_Z(t;p) &= \mathbb{E}\left[e^{i t (x - y)}\right] = \mathbb{E}\left[e^{i t x}\right] \mathbb{E}\left[e^{-i t y}\right]\\
+        &=\left(1+p \left(-1+e^{i t}\right)\right)^n \left(1+p \left(-1+e^{-i t}\right)\right)^n\\
+        &=\left(-p^2 e^{-i t}-p^2 e^{i t}+2 p^2+p e^{-i t}+p e^{i t}-2 p+1\right)^n\\
+        &=(1-2 p+p \cos (t)-i p \sin (t)+p \cos (t)+i p \sin (t)\\
+        &\quad +2 p^2-p^2 \cos (t)+i p^2 \sin (t)-p^2\cos (t)-i p^2 \sin (t))^n \nonumber \\
+        &=\left(p^2 (2-2 \cos (t))+p (2 \cos (t)-2)+1\right)^n
+    \end{align}
+    Since $X$ and $Y$ are identically distributed $P(Z>0) = P(Z<0)$ and so
+    \begin{equation}
+        P(Z>0) = \frac{1}{2}\left(1 - P(Z=0)\right)
+        \label{eq:pz}
+    \end{equation}
+    \Cref{eq:pz} suggests that a tight upper bound of the form $P(Z=0)\geq \alpha$ implies a tight lower bound in the form $P(Z> 0) \leq (1-\alpha)/2$.
+    To bound $P(Z=0)$ we first write it as an integral expression using the characteristic inversion formula for discrete random variables~\citep{ushakov_2011}
+    \begin{equation}
+        P(Z=0) = \frac{1}{2 \pi}\int_{-\pi}^{\ \pi} \phi_Z(t;p)d t
+        \label{eq:prob0}
+    \end{equation}
+    Since $\phi_Z(t;p)$ has the form $(a(t) p^2 + b(t) p + 1)^n$ where $a$ and $b$ are real valued functions and $a(t) \geq 0\ \forall t \in \mathbb{R}$ (i.e an integer power of a quadratic equation with positive leading coefficient), then for any choice of $t$, $\phi_Z(t;p)$  will be globally minimized if and only if $p\to p^{\star}=-b(t)/\left(2 a(t)\right)$.
+    For the particular form of $\phi_Z(t; p)$, $p^\star$ is simply $1/2$
+    \begin{equation}
+        p^\star = -\frac{b(t)}{2 a(t)} = -\frac{2 \cos (t)-2}{2 (2-2 \cos (t))} = \frac{1}{2}
+        \label{eq:pstar}
+    \end{equation}
+    This result is intuitive as the variance of a binomial distribution $\text{Bin}(n,p)$ is maximized for any fixed choice of $n$ when $p=1/2$.
+    We should note that \autoref{eq:pstar} appears problematic when $\cos(t)=1$, but in this case $\phi(t;p)$ becomes constant, hence $p$ cannot influence the upper bound.
+    We can now write the upper bound for $P(Z=0)$
+    \begin{align}
+        P(Z=0) &= \frac{1}{2\pi}\int_{-\pi}^{\ \pi} \phi_{Z}(t;p) dt\\
+        &\geq \frac{1}{2\pi}\int_{-\pi}^{\ \pi} \phi_Z\left(t;\frac{1}{2}\right) dt\\
+        &=  \frac{1}{2\pi}\int_{-\pi}^{\ \pi} 2^{-n} (\cos (t)+1)^n dt \\
+        &= 4^{-n}\binom{2n}{n} \label{eq:17}
+    \end{align}
+    The final expression in \cref{eq:17} can be found using the change of variables $z = e^{i t}$ and Cauchy's residue theorem~\citep{complex}
+    \begin{align}
+        I &= \ \ \frac{1}{2\pi}\int_{-\pi}^{\ \pi} 2^{-n} (\cos (t)+1)^n dt\\
+        & = -\frac{i}{2 \pi } \oint_{|z|=1} 2^{-n} \frac{1}{z}\left(1+\frac{1+z^2}{2 z}\right)^n \, dz\ (\text{using } t\to -i \log z)\\
+        &=  -\frac{i}{2 \pi } \oint_{|z|=1} 4^{-n} z^{-n-1} (z+1)^{2 n} dz\ (\text{simplifying}) \\
+        & = \text{Res}\left( 4^{-n} z^{-n-1} (z+1)^{2 n}, 0\right)\ \ (\text{applying Cauchy's Theorem})\\
+        & = \frac{1}{4^n n!} \lim_{z\to 0}\left( \frac{d^n}{d z^n} (z+1)^{2 n}\right)\\
+        & = \frac{1}{4^n n!} 2n (2n -1) (2n-2)\ldots (n + 1)\\
+        & = 4^{-n} \binom{2n}{n}
+    \end{align}
+
+    Combining \cref{eq:pz} with the bound from \cref{eq:17} we arrive at the conjectured upperbound
+    \begin{align}
+        P(X > Y) = P(Z>0) &= \frac{1}{2}\left(1 - P(Z=0)\right)\\
+        &\leq \frac{1}{2}\left(1-4^{-n} \binom{2n}{n} \right) \text{ by \cref{eq:17}}\\
+    \end{align}
+    Finally we may use Sterling's approximation to show that $4^{-n} \binom{2n}{n} \in O\left(\frac{1}{\sqrt{n}}\right)$ and hence converges to $0$ as $n\to \infty$ leaving a limiting tight upper bound of $1/2$.
+\end{proof}
+
+\begin{theorem}[Probability of Disagreement: A Bayesian Perspective]
+    \label{th:bayes-shift}
+    Let $f$ be a classifier trained on dataset $\boldP$ drawn from the distribution $\Pc$ over $X$ and their corresponding labels.
+    Let $g$ be a classifier observed to agree with $f$ on $\boldP$ but disagree on a dataset $\boldQ$ drawn from a distribution $\Qc$ over $X$.
+    We denote the true probabilities that $g$ will disagree with $f$ on a sample from $\Pc$ and $\Qc$ as $p$ and $q$, respectively.
+    Under a uniform prior $\mathcal{U}(0,1)$ for $p$ and $q$,
+    if we observe that $g$ disagrees with $f$ on $m$ out of $M$ iid samples from $\mathcal{Q}$ while disagreeing with $n$ out of $N$ iid samples from $\mathcal{P}$, then
+    the posterior probability that $g$ is truly more likely to disagree with $f$ on $\Qc$ compared to $\Pc$:
+    \begin{align}
+        \mathbb{P}[q > p] = &1 -\frac{(M+1)! (N+1)! (m+n+1)!}{(m+1)! n! (M-m)! (m+N+2)!} \times \label{eq:hyper}\\
+        &\quad\quad\quad  _3F_2(m+1,m-M,m+n+2;m+2,m+N+3;1) \nonumber
+    \end{align}
+    Where $_p{F}_q$ is the generalized hyper-geometric function, implemented in several standard mathematical libraries.
+\end{theorem}
+\begin{proof}
+    For simplicity we consider the function $\text{dis}: X\to \{0,1\}$ that outputs $0$ if $f(x)=g(x)$ else $1$.
+    We define the true disagreement rates $\textbf{p}$ and $\textbf{q}$ as
+    \begin{equation}
+        \mathbf{p} \coloneqq \mathbb{E}_{x\sim \mathcal{P}}[\text{dis}(x)]\text{ and } \mathbf{q} \coloneqq \mathbb{E}_{x\sim \mathcal{Q}}[\text{dis}(x)]
+        \label{eq:defspq}
+    \end{equation}
+    Without any \textit{a-priori} knowledge of $\text{dis}$ we define the random variables $p$ and $q$ under uniform prior (i.e $p,q\overset{\text{i.i.d}}{\sim}\mathcal{U}(0,1)$) to encode our belief over the true values $\mathbf{p}$ and $\mathbf{q}$.
+    Now we draw $N$ samples as $\mathbf{x} \overset{\text{i.i.d}}{\sim} \mathcal{P}^N$ and $M$ as $\tilde{\mathbf{x}} \overset{\text{i.i.d}}{\sim} \mathcal{Q}^M$ and compute the number of times $\text{dis}(x)$ equals $1$ on each set.
+    \begin{equation}
+    {n}
+        \coloneqq \sum_{x\in \mathbf{x} } \text{dis}(x) \text{ and } {m}\coloneqq \sum_{x\in \tilde{\mathbf{x}} } \text{dis}(x)
+        \label{eq:bayes_result}
+    \end{equation}
+    By definition in \autoref{eq:defspq} we know that $n$ and $m$ are draws from binomial distributions: $\mathcal{N}\sim \text{Bin}(N,p)$ and $\mathcal{M} \sim \text{Bin}(M,q)$ respectively.
+    We can then compute the posterior probability density functions of $p$ and $q$ conditioned on the observations $\mathcal{N}=n$ and $\mathcal{M}=m$ using exact Bayesian inference.
+    \begin{align}
+        f_{p| {n}}(x)&\coloneqq \mathbb{P}[p = x | \mathcal{N}={n}] \\
+        &= \mathbb{P}[\mathcal{N} = {n} | p = x] \underbrace{\mathbb{P}[p = x]}_{=1} \left(\int_{0}^1 \mathbb{P}[\mathcal{N}={n}|p=x] dx\right)^{-1}\\
+        &={\binom{N}{n}} x^{n} (1-x)^{N-{n}}  \left(\int_0^1 {\binom{N}{n}} x^{n} (1-x)^{N-{n}} dx \right)^{-1}\label{eq:binointegral} \\
+        &= x^{n} (1-x)^{N-{n}}  \left(\underbrace{B_x(n+1,-n+N+1)}_{\text{incomplete beta function}}\left. \right\rvert_{x=0}^{x=1}\right)^{-1} \\
+        &=x^{n} (1-x)^{N-{n}}\left(\underbrace{\frac{n! (N-n)!}{(N+1) N!}}_{x=1} - \underbrace{0}_{x=0}\right)^{-1}\\
+        &= \binom{N}{n} x^{n} (1-x)^{N-{n}} (N+1)
+    \end{align}
+    The integration in \autoref{eq:binointegral} is solved using the definition of the incomplete beta function.
+
+    Without loss of generality we may also find $f_{q| m}$
+    \begin{equation}
+        f_{q| m}(x) = (M+1) \binom{M}{m} x^{m} (1-x)^{M-{m}}
+        \label{eq:cond_pmf}
+    \end{equation}
+    Given these closed form posterior distributions for $p$ and $q$ we may compute the probability that the true value of $q$ is greater then $p$
+    \begin{align}
+        &\mathbb{P}[q > p | \mathcal{N}=n, \mathcal{M}=m] = \int_{y>x} f_{q|m}(y)f_{p|n}(x) dy dx\\
+        &= \int_0^1\int_{x}^1 f_{q|m}(y)f_{p|n}(x) dy dx\\
+        & = \binom{M}{m} \binom{N}{n}  (1+M) (1+N) \int_0^1 (1-x)^{-n+N} x^n \int_x^1 (1-y)^{-m+M} y^m dydx
+    \end{align}
+    This integral, while daunting, can easily be solved in closed form using the free online Wolfram Mathematica cloud (\href{https://www.wolframcloud.com/obj/87815d61-488b-4741-b62e-398aca5d8dae}{result link}).
+    The solution is exactly \autoref{eq:hyper}.
+    \begin{align}
+        &\mathbb{P}[q > p | \mathcal{N}=n, \mathcal{M}=m] =1 -\frac{(M+1)! (N+1)! (m+n+1)!}{(m+1)! n! (M-m)! (m+N+2)!} \times \label{eq:th2-res}\\
+        &  \quad\quad_3F_2(m+1,m-M,m+n+2;m+2,m+N+3;1) \nonumber
+    \end{align}
+    To gain intuition, a graphical representation of \autoref{eq:th2-res} is provided in \autoref{fig:bayes_dis}.
+    From a practical standpoint, if a practitioner trains two classifiers $f$ and $g$ that appear to disagree more often on a new dataset than a baseline rate computed on an in-domain test set, they can decide to act on that observation.
+    (e.g., collected more training data) at a particular belief threshold (e.g., probability greater than 80\%).
+    Furthermore, there is a natural link between \autoref{eq:th2-res} and covariate shift as exact knowledge of $\mathbf{q} > \mathbf{p}$ by definition implies not only covariate shift $\Pc \neq \Qc$,
+    but a type that is harmful by our original definition in TODO.
+    Therefore, knowing the probability that $q>p$ is a useful measure of how likely, without any additional assumptions, that we are experiencing a harmful covariate shift.
+
+    \begin{figure}
+        \centering
+        \includegraphics[width=\linewidth]{images/bayes_dis.pdf}
+        \caption{Belief that the probability $q$ that two classifiers disagree on samples from $\Qc$ is greater then the probability $p$ that they disagree on $\Pc$ given an observation of $m$ disagreements out of $M$ samples from $\Qc$ and $n$ of $N$ disagreements on $\Pc$.
+        We plot this probability for $M=20$ and $N=10000$. We observe that even for a small test set size, $M=20$, we can strongly believe that there is a true difference when $m/M$ is only slightly larger then $n/N$.}
+        \label{fig:bayes_dis}
+    \end{figure}
+
+\end{proof}

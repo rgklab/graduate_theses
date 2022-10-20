@@ -1,0 +1,37 @@
+We provide a summary of the original Rejectron algorithm for PQ learning~\citep{pqlearn} as it is the primary motivation for our work.
+Rejectron (\autoref{alg:rejectron}) takes as input a labeled training set of $n$ samples $\mathbf{x}$ (iid over $\mathcal{P}$), an unlabeled test set of $n$ samples $\tilde{\mathbf{x}}$ (iid over $\mathcal{Q}$), an error $\epsilon$ and a weight $\Lambda$.
+The output is a selective classifier, that predicts according to a base classifier $h$ if the input $x$ is inside some set $S$ and otherwise rejects (abstains from predicting).
+\begin{equation}
+    \left. h\right|_{S}(x) \coloneqq \begin{cases}
+                                         h(x) & x\in S \\
+                                         \text{reject} & x\not\in S
+    \end{cases}
+    \label{eq:selective_classifier}
+\end{equation}
+Under several assumptions and a special value $\epsilon^\star$, this selective classifier is guaranteed with high probability to have error less then $2 \epsilon^\star$ on $\tilde{\mathbf{x}}$
+and a rejection rate below $\epsilon^\star$ on ${\mathbf{x}}$ (see Theorem 5.7 in~\citeauthor{pqlearn}).
+
+\begin{algorithm}
+    \SetKwComment{Comment}{$\ $\# }{ }
+    \caption{Rejectron~\citep{pqlearn}}
+    \label{alg:rejectron}
+    \KwIn{train $\mathbf{x} \in X^{n}$, labels $\mathbf{y} \in Y^{n}$, test $\tilde{\mathbf{x}} \in X^{n}$, error $\epsilon \in[0,1]$, weight $\Lambda=n+1$}
+    \KwOut{selective classifier $\left. h\right|_{S}$}
+    $h\gets \operatorname{ERM}(\mathbf{x}, \mathbf{y})$ \Comment{assume black box oracle ERM to minimize errors}
+    \For{$t=1,2,3, \ldots$}{
+        1. $S_{t}\coloneqq \left\{x \in X: h(x)=c_{1}(x)=\ldots=c_{t-1}(x)\right\}$ \Comment{So $S_{1}=X$}
+        2. Choose $c_{t} \in C$ to maximize $s_{t}(c)\coloneqq\operatorname{err}_{\tilde{\mathbf{x}}}\left(\left.h\right|_{S_{t}}, c\right)-\Lambda \cdot \operatorname{err}_{\mathbf{x}}(h, c)$ over $c \in C$\\
+        3. If $s_{t}\left(c_{t}\right) \leq \epsilon$, then stop and return $\left.h\right|_{S_{t}}$
+    }
+\end{algorithm}
+Rejectron starts by querying an empirical risk minimization (ERM) oracle that uses a 0--1 risk score over a concept class $C$ for a model $h$ that perfectly learns the training dataset.
+A primary assumption for Rejectron to output a perfect model as well as for it to eventually find a selective classifier that meets the $\epsilon^\star$ bound is that the true decision function
+(i.e., the function that creates the training labels) is also a member of $C$.
+The authors refer to this setting as \textit{realizable}.
+
+On the first iteration of the algorithm, Rejectron finds another model $c_1\in C$ that jointly maximizes the error with respect to $h$ on $\tilde{\mathbf{x}}$ while minimizing it on ${\mathbf{x}}$.
+The authors show that they can efficiently solve this optimization problem using a single ERM query on a dataset of $n^2+n$ samples (see Lemma 5.1 in~\citeauthor{pqlearn}).
+
+In every subsequent step $t>1$ a set $S_t$ is created where all models $h$ through to $c_{t-1}$ agree.
+Another model $c_t\in C$ is found that maximizes the same objective as above but only on the intersection of $\tilde{\mathbf{x}}$ and $S_t$.
+Upon termination a selective classifier $\left. h\right|_{S_t}$ is output.

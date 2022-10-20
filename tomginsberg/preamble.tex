@@ -1,0 +1,62 @@
+\input{math_commands.tex}
+% packages
+\usepackage[colorlinks]{hyperref} % for links
+%\usepackage[backend=biber]{biblatex} % for references
+%\addbibresource{bib.bib} % for references
+
+\usepackage{graphicx} % for embedding graphics
+\usepackage{booktabs} % for pretty tables
+\usepackage{lipsum} % for gibberish text
+\usepackage{mathtools}
+\usepackage{wrapfig}
+\usepackage{natbib}
+\usepackage{floatrow}
+\bibliographystyle{abbrvnat}
+\setcitestyle{authoryear, citesep={;}, aysep={,},yysep={;}}
+\setcitestyle{square}
+
+
+\doublespacing
+\usepackage{xcolor}
+\definecolor{amaranth}{HTML}{E83151}
+\definecolor{russianviolet}{HTML}{330036}
+\definecolor{darkblue}{HTML}{645E9D}
+\hypersetup{
+    colorlinks=true,
+    linkcolor=russianviolet,
+    citecolor=darkblue,
+    urlcolor=amaranth}
+\newcommand{\xhdr}[1]{\noindent{{\bf #1.}}}
+\usepackage{listings}
+\usepackage{pythonhighlight}
+\usepackage{makecell}
+\usepackage{tabularx}
+
+\usepackage{cleveref}
+\usepackage{amssymb}
+\usepackage{amsthm}
+
+\usepackage[ruled,vlined]{algorithm2e}
+\newcommand\mycommfont[1]{\footnotesize\ttfamily\textcolor{blue}{#1}}
+\SetCommentSty{mycommfont}
+
+\newcommand{\boldQ}{\mathbf{Q}}
+\newcommand{\boldP}{\mathbf{P}}
+\newcommand{\Qc}{\mathcal{Q}}
+\newcommand{\Pc}{\mathcal{P}}
+\newcommand{\Rc}{\mathcal{R}}
+\newcommand{\Pun}{\boldP^\star}
+
+\newcommand{\method}{Detectron}
+
+\theoremstyle{definition}
+\newtheorem{definition}{Definition}
+\newtheorem{assumption}{Assumption}
+\newtheorem{theorem}{Theorem}
+\newtheorem{lemma}{Lemma}
+
+\newtheorem{manualtheoreminner}{Theorem}
+\newenvironment{manualtheorem}[1]{%
+    \renewcommand\themanualtheoreminner{#1}%
+    \manualtheoreminner}
+    {\endmanualtheoreminner}

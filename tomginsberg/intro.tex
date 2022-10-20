@@ -1,0 +1,36 @@
+Machine learning models operate on the assumption, albeit incorrectly that they will be deployed on data distributed identically to what they were trained on.
+The violation of this assumption is known as distribution shift and can often result in significant degradation of performance~\citep{cifar101,cifar10C,learnundercov, failloud, mindperfgap, trustuncert}.
+There are several cases where a mismatch between training and deployment data results in very real consequences on human beings.
+In healthcare, machine learning models have been deployed for predicting the likelihood of sepsis.
+Yet, as~\citep{10.1001/jamainternmed.2021.3333} show, such models can be miscalibrated for large groups of individuals, directly affecting the quality of care they experience.
+The deployment of classifiers in the criminal justice system~\citep{AIissend45:online}, hiring and recruitment pipelines~\citep{Amazonsc17:online} and self-driving cars~\citep{selfdrive} have all seen humans affected by the failures of learning models.
+The need for methods that quickly detect, characterize and respond to distribution shift is, therefore, a fundamental problem in trustworthy machine learning.
+For practitioners, regulatory agencies and individuals to have faith in deployed predictive models without the need for laborious manual audits, we need methods for the identification of distribution shift
+that are \textit{sample-efficient} (identifying shifts from a small number of samples), \textit{informed} (identifying shifts relevant to the domain and learning algorithm), \textit{model-agnostic}
+(identifying shifts regardless of the functional class of the predictive model) and \textit{statistically sound} (identifying true shifts while avoiding false positives with high-confidence).
+
+In our work, we study a special case of distribution shift, commonly known as \textit{covariate shift}, which considers shifts only in the distribution of input data $\Pc_X \neq \Qc_X$ while the relation between the inputs and outputs remains fixed $\Pc_{Y|X} = \Qc_{Y|X}$.
+In a standard deployment setting where ground truth labels are not available, estimating any properties of the true distribution $\Qc_{Y|X}$ is fundamentally impossible without strong assumptions.
+As a consequence covariate shift is the only type of distribution shift that can be identified.
+
+We build off recent progress in understanding model performance under covariate shift using the PQ-learning framework~\citep{pqlearn}, a framework for selective classifiers that may either predict on or reject a given sample, that provides strong performance guarantees on arbitrary test distributions.
+Our work uses and extends PQ-learning to develop a practical, model-based hypothesis test, named \textit{the \method}, to identify potentially harmful covariate shifts given any existing classification model already in deployment.
+
+Our work makes the following key contributions:
+
+\begin{itemize}
+    \item We show how to construct an ensemble of classifiers that maximize out-of-domain disagreement while behaving consistently in the training domain.
+    We propose the \emph{disagreement cross entropy} for models learned via continuous gradient-based methods (e.g., neural networks), as well as a generalization for those learned via discrete optimization (e.g., random forest).
+    \item We show that the rejection rate and the entropy of the learning ensemble can be used to define a model-aware hypothesis test for covariate shift, the \method,\ that in idealized settings can provably detect covariate shift.
+    \item On high-dimensional image and tabular data, using both neural networks and gradient boosted decision trees, our method outperforms state-of-the-art techniques for detecting covariate shift, particularly when given access to as few as ten test examples.
+\end{itemize}
+
+\begin{figure}[!htb]
+    \centering
+    \includegraphics[width=\linewidth]{images/detectron.pdf}
+    \caption{\small \textbf{Detectron (PQ Learning for Covariate Shift Detection):} Starting with a base classifier trained on labeled samples from distribution $\Pc$ we
+    train new \textit{\textbf{C}onstrained \textbf{D}isagreement \textbf{C}lassifiers} (CDCs) on a small set of observed unlabeled samples from a new distribution $\Qc$.
+    CDCs aim to maximize classification disagreement on $\Qc$ while constrained to agree with the base classifier on $\Pc$. The rate $\phi$ that CDCs disagree,
+        as well as their entropy, on test data is a powerful and sample efficient statistic for identifying covariate shift $\Pc\neq \Qc$.}
+    \label{fig:detectron}
+\end{figure}

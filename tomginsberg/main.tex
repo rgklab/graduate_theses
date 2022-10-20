@@ -1,0 +1,92 @@
+\documentclass{ut-thesis}
+
+\input{preamble}
+% author data
+\author{Tom Ginsberg}
+\title{Identifying and Characterizing High Dimensional Covariate Shift with Learning Models}
+\degree{Master of Science}
+\department[]{Department of Computer Science}
+\gradyear{2023}
+
+\makeatletter
+\renewcommand{\@makechapterhead}[1]{%
+  {\noindent\raggedright\normalfont% Alignment and font reset
+   \huge\bfseries \@chapapp\space\thechapter~~#1\par\nobreak}% Formatting
+  \vspace{\baselineskip}% ...just a little space
+}
+\makeatother
+
+% Document
+\begin{document}
+
+    \maketitle
+    \begin{abstract}
+        The ability to quickly and accurately identify covariate shift at test time is a critical and often overlooked component of safe machine learning systems deployed in high-risk domains.
+        While methods exist for detecting when predictions should not be made on out-of-distribution test examples, identifying distributional level differences between training and test time can help determine when a model should be removed from the deployment setting and retrained.
+        In this thesis, we explore modern and foundational methods for identifying and characterizing distributional shift in high dimensional data, in particular where such data is treated as the covariates to a learning model --- this type of distribution shift is known formally as covariate shift.
+        We go on to provide a new definition for \textit{harmful covariate shift} ({\small HCS}) that goes beyond ideas from standard learning theory to give a richer insight on when covariate shift may hurt the performance of classification models.
+        Motivated from our definition, we propose a method, the Detectron, to detect {\small HCS} based on the discordance between an ensemble of \textit{constrained disagreement classifiers} (CDCs)  trained to agree on training data and disagree on test data.
+        We derive a loss function for training CDCs and show that their disagreement rate and predictive entropy represent powerful discriminative statistics for {\small HCS}.
+        Furthermore, we present tight finite sample shift detection guarantees in an idealized setting.
+        Empirically, we demonstrate that the CDC learning algorithm produces model with behaviour that aligns well with our desideratum.
+        Finally we showcase the ability of the Detectron to detect {\small HCS} with statistical certainty on a variety of high-dimensional datasets.
+        Across numerous domains and modalities, we show state-of-the-art performance compared to existing methods, particularly when the number of observed test samples is small.
+    \end{abstract}
+
+    \begin{acknowledgements}
+        I would first and foremost like to thank my graduate supervisor Professor Rahul G. Krishnan,
+        for his continuous support and mentorship throughout my studies, as well as Professor Murat Erdogdu for
+        his role as an additional reader for this thesis.
+        I would also like to thank my original graduate cohort, Vahid Balazadeh, and Michael Cooper, for their
+        help brainstorming ideas, useful feedback, research advice, squash playing and all
+        around creation of an amazing lab environment.
+        Additional thanks to others that provided helpful advice and feedback include:
+        Edward De Brouwer, Aslesha Pokhrel, Zhongyuan Liang, Adnan Mohd, Ian Shi, and Stephan Rabanser.
+    \end{acknowledgements}
+    \tableofcontents
+    \listoftables
+    \listoffigures
+
+    \chapter[Introduction]{Introduction: Covariate Shift}
+    \label{ch:intro}
+
+    \input{intro}
+
+
+    \chapter[Background: Covariate Shift]{Background: Covariate Shift}\label{ch:related}
+
+    \input{background}
+
+    \chapter[Detectron: Methodlogy]{The Detectron: Identifying Harmful Covariate Shift based on Classifier Disagreement}\label{ch:detectron}
+
+    \input{detectron}
+
+
+    \chapter{Applications and Experiments}\label{ch:experiments}
+    \lipsum[11-12]
+
+
+    \chapter{Discussion}\label{ch:discussion}
+    \lipsum[13-14]
+
+
+    \chapter{Conclusion}\label{ch:conclusion}
+    \lipsum[15-16]
+
+    \bibliography{bib}
+
+    \appendix
+
+
+    \chapter{Appendix}\label{ch:appendix}
+
+
+    \section{Rejectron}\label{sec:rejectron}
+    \input{rejectron}
+
+
+    \section{Proofs}\label{sec:proofs}
+    \input{proofs}
+
+
+\end{document}
