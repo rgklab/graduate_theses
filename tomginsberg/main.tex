@@ -10,9 +10,9 @@
 
 \makeatletter
 \renewcommand{\@makechapterhead}[1]{%
-  {\noindent\raggedright\normalfont% Alignment and font reset
-   \huge\bfseries \@chapapp\space\thechapter~~#1\par\nobreak}% Formatting
-  \vspace{\baselineskip}% ...just a little space
+        {\noindent\raggedright\normalfont% Alignment and font reset
+    \huge\bfseries \@chapapp\space\thechapter~~#1\par\nobreak}% Formatting
+    \vspace{\baselineskip}% ...just a little space
 }
 \makeatother
 
@@ -63,15 +63,15 @@
 
 
     \chapter{Applications and Experiments}\label{ch:experiments}
-    \lipsum[11-12]
+    \input{experiments}
 
 
     \chapter{Discussion}\label{ch:discussion}
-    \lipsum[13-14]
+    \input{discussion}
 
 
-    \chapter{Conclusion}\label{ch:conclusion}
-    \lipsum[15-16]
+    \chapter{Conclusion, Limitations and Future Work}\label{ch:conclusion}
+    \input{conclusion}
 
     \bibliography{bib}
 
@@ -87,6 +87,8 @@
 
     \section{Proofs}\label{sec:proofs}
     \input{proofs}
+
+    \input{datasets_and_experimental_details}
 
 
 \end{document}

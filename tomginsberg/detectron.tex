@@ -20,12 +20,13 @@ compared to $\Qc$; motivated by the setting where we wish to detect shift quickl
 In many practical problems, a practitioner may use domain knowledge to embed invariances with the explicit goal of ensuring the predictive performance of a classifier does not, by construction, change under certain shifts.
 This may be done directly via translation invariance in convolutional neural networks, permutation invariance in DeepSets~\citep{deepsets} or indirectly via data augmentation or domain adaptation.
 Other model invariances are often learned naturally due to the structure of a given dataset and associated decision problem.
+
 \begin{wrapfigure}{r}{0.5\textwidth}
-    \vspace{-6mm}
+    \vspace{-8mm}
     \begin{center}
         \includegraphics[width=\linewidth]{images/mnist_corrupted.pdf}
     \end{center}
-    \vspace{-4mm}
+    \vspace{4mm}
     \caption{\small Blacking out the corners in MNIST is an example of a \textit{non harmful} covariate shift with respect to a simple CNN that achieves near 100\% accuracy on both sets.
     A likely explanation for why this shift is not harmful is because MNIST images contain content primarily in the center, leading to classifiers implicitly learning an invariance to the corners
     of the image.}
@@ -169,8 +170,6 @@ Consequently, we learn with the loss in \autoref{eq:loss}. $\ell$ denotes the st
 
 When learning CDCs in practice, $\mathcal{L}_g$ should be combined with any additional regularization and data augmentation used in the original training process of $f$ to ensure that we retain the true generalization region of $f$.
 Furthermore, training and validation metrics must be closely monitored on unseen samples from $\Pc$ to ensure that $g$ achieves similar generalization performance on $\Pc$.
-%and in cases where $\Qc$ is under $\mathcal{R}$, $g$ does not simply overfit to the training objective.
-
 
 \xhdr{Choosing $\lambda$} In the original formulation of Rejectron, selective classifiers are trained on a dataset consisting of $\boldP$ replicated $|\boldP|$ times and $\boldQ$.
 Calling an ERM oracle on this data ensures that a misclassification on $\boldP$ is significantly more costly than one on $\boldQ$ but requires $\Omega(|\boldP|^2 )$ samples, an impractical number for large datasets.
@@ -196,7 +195,7 @@ Now we consider the sum of the cross entropy for each label in $\mathcal{S}$:
 \begin{align}
     \sum_{y\in \mathcal{S}} \text{CE}(f(x), y) &= -\sum_{y\in \mathcal{S}} \sum_{c=1}^{N}[{c=y}]\log(f(x)_c) \\
     &=-\sum_{c=1}^{N}[{c\in \mathcal{S}}]\log(f(x)_c)\\
-    &= (N-1) \text{DCE}(f(x), y)
+    &= (N-1) \hat{\ell}_\text{DCE}(f(x), y)
 \end{align}
 Hence when giving each sample a weight of $1/(N-1)$ we recover the exact from of DCE.
 \smallbreak
@@ -205,6 +204,34 @@ ensemble of CDCs where the $k^{\text{th}}$ model is trained only to disagree on 
 $\boldQ$ that has yet to be disagreed on by models $1$ through $k-1$.
 The final disagreement rate $\phi_\boldQ$ is the fraction of unlabelled samples where any CDC provides an alternate decision from $f$.
 In what follows we use this rate to detect shift.
+
+\begin{algorithm}
+    \DontPrintSemicolon
+    \SetAlgoLined
+    \SetNoFillComment
+    \SetKwRepeat{Do}{do}{while}%
+    \caption{Constrained Disagreement}\label{alg:constrained}
+    \KwIn{$L$: learning algorithm, $\boldP_{\text{train}}$: labeled training dataset $\{\dots,(x_i,y_i),\dots\}$,
+        $\boldP_{\text{val}}$: labeled validation dataset $\{\dots,(x_i,y_i),\dots\}$, $\boldQ$: unlabeled test dataset $\{\dots,{x}_i,\dots\}$,
+        $f$: classifier trained on $\boldP$, $\mathcal{M}$: evaluation metric (default \textit{accuracy}), $\varepsilon$: tolerance (default 0.05),
+        $k$: max epochs (default 10)}
+    \KwOut{Constrained Disagreement Classifier $g_{(f,\boldP, \boldQ)}$}
+    $\hat{\boldQ}\ \gets\ \{({x}, f({x}))\ |\ \hat{x}\in \boldQ\}$ \tcp*{infer pseudo labels on $\boldQ$ using $f$}
+    \tcp*{create a batched dataloader using $\boldP \text{ and } \boldQ$}
+    ${\boldP\boldQ}\ \gets\ $Batched($\{(x,y)\ |\ (x,y)\in \boldP \land (x,y)\in \boldQ$\})
+    $g\ \gets\ f$\tcp*{Initialize $g$ with $f$}
+    $m_0\ \gets\ \mathcal{M}(f, \boldP_{\text{val}})$ \tcp*{Compute the validation performance of $f$}
+    \While{$\mathcal{M}(f, \boldP_{\text{val}}) > m_0 - \varepsilon$ and iterations $<\ k$}{
+        \tcp*{Training epoch over $\hat{\boldP\boldQ}$}
+        \For{batch $\ \in \boldP\boldQ$}{
+            $x_P,\ y_P\ \gets\ \{(x, y)\ |\ (x,y)\in\text{ batch}\text{ and }(x,y)\in {\boldP}_{\text{train}}\}$\\
+            $x_Q,\ y_Q\ \gets\ \{(x, y)\ |\ (x,y)\in\text{ batch}\text{ and }(x,y)\in \hat{\boldQ}\}$\\
+            \tcp*{Update $g$ using an existing learning algorithm for $(x_P, y_P)$ and the appropriate disagreement update for $(x_Q, y_Q)$}
+            $g\ \gets \text{Update}(g, L, (x_P, y_P), (x_Q, y_Q))$
+        }
+    }
+    \Return{$g$}
+\end{algorithm}
 
 
 \section{Detecting Shift with Constrained Disagreement}\label{sec:from-constrained-disagreement-to-detecting-shift-with-hypothesis-tests}

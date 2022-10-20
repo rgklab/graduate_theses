@@ -1,0 +1,12 @@
+Our work presents a practical application of PQ learning towards creating a method capable of detecting covariate shifts given a pre-existing classifier.
+On both neural networks and random forests, we showcase the efficacy of our method in being sensitive enough to detect covariate shift using a small number of unlabelled examples across several real-world datasets.
+We remark on several characteristics of our algorithm that represent potential directions for future work:
+
+\emph{Beyond Classification: }Our work here focuses on the case of classification (since a large number of pre-existing benchmarks in the literature focus on the same).
+However, we believe there is a viable extension of our work to regression models where constrained predictors are explicitly learned to maximize test error according to the existing metric, such as mean squared error.
+We leave this exploration for future work.
+
+\emph{Beyond Covariate Shifts: }While covariate shift is the only type of shift that can be discovered from unlabeled data without additional assumptions, we acknowledge that other types of shift, such as label and concept shift, are prevalent in the real world.
+Building learning-based methods to identify these types of shifts is another direction for future work.
+
+Finally, we wish to highlight that while auditing systems such as the \method\ show promise to ease concerns when using learning systems in high-risk domains, practitioners interfacing with these systems should not place blind trust in their outputs.
