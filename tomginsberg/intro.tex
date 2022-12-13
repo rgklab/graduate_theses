@@ -9,19 +9,22 @@ For practitioners, regulatory agencies and individuals to have faith in deployed
 that are \textit{sample-efficient} (identifying shifts from a small number of samples), \textit{informed} (identifying shifts relevant to the domain and learning algorithm), \textit{model-agnostic}
 (identifying shifts regardless of the functional class of the predictive model) and \textit{statistically sound} (identifying true shifts while avoiding false positives with high-confidence).
 
-In our work, we study a special case of distribution shift, commonly known as \textit{covariate shift}, which considers shifts only in the distribution of input data $\Pc_X \neq \Qc_X$ while the relation between the inputs and outputs remains fixed $\Pc_{Y|X} = \Qc_{Y|X}$.
-In a standard deployment setting where ground truth labels are not available, estimating any properties of the true distribution $\Qc_{Y|X}$ is fundamentally impossible without strong assumptions.
-As a consequence covariate shift is the only type of distribution shift that can be identified.
+In our work, we study a special case of distribution shift, commonly known as \textit{covariate shift}, which considers shifts only in the distribution of input data to a learning model $f: X\to Y$.
+Considering a general factorization of the joint distribution of $X$ and $Y$ as $\Pc_{X,Y}=\Pc_X\times \Pc_{Y|X}$, covariate shift describes the set of distributions $\Qc_{X,Y}$ such that $\Pc_X \neq \Qc_X$ while the conditional distribution between the inputs and outputs remains fixed $\Pc_{Y|X} = \Qc_{Y|X}$\footnote{Shifts in the conditional distribution of $X|Y$ is commonly known as correlation or concept shift}.
+In many standard machine learning settings we assume that $f$ is trained to learn $\Pc_{Y|X}$ using samples from $\Pc_{X,Y}$, but in deployment it observes only samples from $\Qc_X$.
+In standard learning theory only relatively loose bounds can be made on the performance of $f$ when $\Pc_X\neq \Qc_X$ even in the absence of concept shift.
 
-We build off recent progress in understanding model performance under covariate shift using the PQ-learning framework~\citep{pqlearn}, a framework for selective classifiers that may either predict on or reject a given sample, that provides strong performance guarantees on arbitrary test distributions.
+We build off recent progress in understanding model performance under covariate shift using the PQ-learning framework~\citep{pqlearn}, a framework for selective classifiers that may either predict on or abstain for a given sample.
+PQ learning introduces a strong set of performance guarantees for such selective classifiers under arbitrary covariate shifts, we summarize the main results of PQ learning in \autoref{sec:selective-classification-and-pq-learning}.
 Our work uses and extends PQ-learning to develop a practical, model-based hypothesis test, named \textit{the \method}, to identify potentially harmful covariate shifts given any existing classification model already in deployment.
 
+\smallbreak\noindent
 Our work makes the following key contributions:
 
 \begin{itemize}
     \item We show how to construct an ensemble of classifiers that maximize out-of-domain disagreement while behaving consistently in the training domain.
     We propose the \emph{disagreement cross entropy} for models learned via continuous gradient-based methods (e.g., neural networks), as well as a generalization for those learned via discrete optimization (e.g., random forest).
-    \item We show that the rejection rate and the entropy of the learning ensemble can be used to define a model-aware hypothesis test for covariate shift, the \method,\ that in idealized settings can provably detect covariate shift.
+    \item We show that the rejection rate and the entropy of the learning ensemble can be used to define a model-aware hypothesis test for covariate shift, \textbf{the \method},\ that in idealized settings can provably detect covariate shift.
     \item On high-dimensional image and tabular data, using both neural networks and gradient boosted decision trees, our method outperforms state-of-the-art techniques for detecting covariate shift, particularly when given access to as few as ten test examples.
 \end{itemize}
 

@@ -89,7 +89,7 @@
     Finally we may use Sterling's approximation to show that $4^{-n} \binom{2n}{n} \in O\left(\frac{1}{\sqrt{n}}\right)$ and hence converges to $0$ as $n\to \infty$ leaving a limiting tight upper bound of $1/2$.
 \end{proof}
 
-\begin{theorem}[Probability of Disagreement: A Bayesian Perspective]
+\begin{manualtheorem}{2}[Probability of Disagreement: A Bayesian Perspective]
     \label{th:bayes-shift}
     Let $f$ be a classifier trained on dataset $\boldP$ drawn from the distribution $\Pc$ over $X$ and their corresponding labels.
     Let $g$ be a classifier observed to agree with $f$ on $\boldP$ but disagree on a dataset $\boldQ$ drawn from a distribution $\Qc$ over $X$.
@@ -102,7 +102,7 @@
         &\quad\quad\quad  _3F_2(m+1,m-M,m+n+2;m+2,m+N+3;1) \nonumber
     \end{align}
     Where $_p{F}_q$ is the generalized hyper-geometric function, implemented in several standard mathematical libraries.
-\end{theorem}
+\end{manualtheorem}
 \begin{proof}
     For simplicity we consider the function $\text{dis}: X\to \{0,1\}$ that outputs $0$ if $f(x)=g(x)$ else $1$.
     We define the true disagreement rates $\textbf{p}$ and $\textbf{q}$ as

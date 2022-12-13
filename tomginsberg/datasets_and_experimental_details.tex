@@ -1,13 +1,11 @@
-\section{Experimental Details}
-\label{sec:expdet}
-
 \subsection{Base Classifiers}
 \label{subsec:basclf}
 For each dataset used in our experiments, we begin by training a \textit{base classifier} on the source domain portion of the dataset to use in subsequent experiments and baselines.
 For a brief description of the datasets used and base classifiers, see \autoref{tab:datasets} and for a more detailed description of each dataset as well as what we have considered precisely as the source and shifted domains, see \autoref{subsec:predata}.
 
+\smallbreak
 \xhdr{CIFAR 10}
-We use a standard Resnet18 model pre-trained on ImageNet~\citep{deng2009imagenet} made available in the torchvision library~\citep{torchvision} (\verb!torchvision.models.resnet18(pretrained=True)!) although we reinitialize the last network layer to have an output size of $10$.
+We use a standard Resnet18 model pre-trained on ImageNet~\citep{deng2009imagenet} made available in the torchvision library~\citep{torchvision} although we reinitialize the last network layer to have an output size of $10$.
 We use stochastic gradient descent (SGD) with a base learning rate of $0.1$, $L_2$ regularization of $5\times 10^{-4}$, momentum of $0.9$, a batch size of $128$ and a cosine annealing learning rate schedule with a maximum 200 iterations stepped once per epoch for a total of 200 epochs.
 We use the standard CIFAR-10 training split normalized by its mean ($\mu=[0.4914, 0.4822, 0.4465]$) and standard deviation ($\sigma=[0.2023, 0.1994, 0.2010])$.
 Every epoch, we randomly crop each image to a size of $32\times 32$ after applying a $0$ padding of four pixels to each spatial dimension, and we apply a horizontal flip with probability $0.5$.
@@ -16,32 +14,37 @@ While this score is far from state-of-the-art on CIFAR-10, our goal is not to co
 We wish to create a \textit{reasonably good} model as an example of a model that could realistically be deployed in real-world settings.
 When training deep ensembles, we only vary the random seed in the range $[0,\ldots ,4]$.
 
+\smallbreak
 \xhdr{Camelyon 17}
 We follow a similar approach to CIFAR 10.
 However, we use two output features (for binary classification of cancerous or benign pathology), a batch size of $512$, the ADAM optimizer~\citep{DBLP:journals/corr/KingmaB14} with a base learning rate of $0.001$, $L_2$ regularization of $10^{-5}$ and a total of $5$ training epochs for which we select the model with the best validation accuracy.
 This model achieves a test accuracy of $0.93$.
 When training deep ensembles, we only vary the random seed in the range $[0,\dots,4]$.
 
+\smallbreak
 \xhdr{UCI Heart Disease}
 We train both neural networks and gradient boosted trees using the XGboost library~\citep{xgb}.
 For the neural network model, we use a simple MLP with an input dimension of $9$, $3$ hidden layers of size $16$ with ReLU activation followed by a $30\%$ dropout layer and a linear layer to $2$ outputs (heart disease present or not).
 We use $358$ samples for training and $120$ for validation.
 We train for a maximum of $1000$ epochs and select the model with the highest AUC on the validation set, performing early stopping if the validation AUC has not increased in over 100 epochs.
 This model achieves a test AUC computed on 119 samples of 0.85.
-As with CIFAR 10 and Camelyon 17, we only vary the random seed in the range $[0,\dots,9]$ when training deep ensembles. Note that we chose a larger ensemble size here as models are fairly cheap to train.
-Another important trick when using small $\boldQ$ sizes is to sample all of $\boldQ$ in each batch filling the best with a random set of samples from $\boldP$. Of procedure artificially inflates the size of $\boldQ$ so the hyperparameter $\lambda$ must account for this by picking up an extra multiplicative factor equal to $(\text{batches per epoch})^{-1}$.
+As with CIFAR 10 and Camelyon 17, we only vary the random seed in the range $[0,\dots,9]$ when training deep ensembles.
+Note that we chose a larger ensemble size here as models are fairly cheap to train.
+Another important trick when using small $\boldQ$ sizes is to sample all of $\boldQ$ in each batch filling the best with a random set of samples from $\boldP$.
+Our procedure artificially inflates the size of $\boldQ$ so the hyperparameter $\lambda$ must account for this by picking up an extra multiplicative factor equal to $(\text{batches per epoch})^{-1}$.
 
-When training gradient boosted trees using XGboost we employ standard library parameters ($\eta=0.1$, eval\_metric$=$auc, max\_depth$=6$, subsample$=0.8$, colsample\_bytree=$0.8$, min\_child\_weight$=1$, objective=binary:logistic, num\_round$=10$).
+When training gradient boosted trees using XGboost we employ standard library parameters
+($\eta=0.1$, eval\_metric$=$auc, max\_depth$=6$, subsample$=0.8$, colsample\_bytree=$0.8$, min\_child\_weight$=1$, objective=binary:logistic, num\_round$=10$).
 This model while taking less then $5s$ to train achieves a test AUC of 0.88.
 
 \subsection{Constrained Disagreement Classifiers}
 \label{subsec:constr}
-We expand on the experimental details for learning constrained disagreement classifiers (\autoref{algo:constrained}).
+We expand on the experimental details for learning constrained disagreement classifiers (\autoref{alg:constrained}).
 When training a CDC $g_{(f,\boldP, \boldQ)}$ we start by creating a new dataset that combines all elements of the labeled set $\boldP$ and the unlabeled set $\boldQ$ with pseudo labels inferred by the base classifier $f$.
 We store a single bit for each sample in the combined dataset to indicate if a sample was originally drawn from $\boldP$ or $\boldQ$.
 When training CDCs with neural networks, we use the DCE loss ($\autoref{eq:loss}$)
 under similar semantics as the pseudo-code implementation provided above.
-When training discrete models, we resort to our generalized approach in \autoref{subsec:extension}.
+When training discrete models, we resort to our generalized approach in \autoref{subsec:gen_beyond}.
 To reduce training time we initialize $g$ using the exact same architecture/weights
 as $f$ and apply the exact same optimization algorithm/learning rate used to train $f$ (see \autoref{subsec:basclf}).
 For CIFAR 10, we train each CDC for a maximum of 10 epochs performing early stopping if the model drops in in-distribution validation performance
@@ -54,7 +57,8 @@ Forcing a model to predict with high entropy on a subset of in-distribution data
 The details for training CDCs on Camelyon 17 are the same as those described for CIFAR 10, however due to the large training set size ($302436$ samples) we simply select a random subset of size $50,000$ as $\boldP$ at each epoch -- a number we experimentally deemed as sufficient to achieve low in-distribution generalization error.
 When training CDCs on the UCI Heart Disease dataset, we use XGBoost~\citep{xgb} with the same hyperparameters described in \autoref{subsec:basclf}.
 
-For the runtime experiment presented in \autoref{fig:runtime} we train each CDC for only one batch, where each batch contains a set of 100 samples $\boldQ$ and is filled up to a batch size of 512 with random samples from $\boldP_{\text{train}}$. After every batch we eliminate all samples where the CDC disagrees with the base predictions.
+For the runtime experiment presented in \autoref{fig:runtime} we train each CDC for only one batch, where each batch contains a set of 100 samples $\boldQ$ and is filled up to a batch size of 512 with random samples from $\boldP_{\text{train}}$.
+After every batch we eliminate all samples where the CDC disagrees with the base predictions.
 We continue this for a maximum of 150 batches, but perform early stopping if 10 batches pass without at least one sample getting disagreed on.
 
 \subsection{Description of Baseline Methods}
@@ -62,22 +66,36 @@ We continue this for a maximum of 150 batches, but perform early stopping if 10 
 We compare the \method\ against several methods for OOD detection, uncertainty estimation and covariate shift detection found in recent literature.
 \begin{enumerate}
     \item \textit{Deep Ensembles} shown by~\cite{trustuncert} to provide the most accurate estimates of predictive confidence under covariate shift.
-    To compare directly with \method\ we test both the disagreements rates and the entropy distributions of the ensemble. See \autoref{sec:hyp} for more information on how these tests are run.
+    To compare directly with \method\ we test both the disagreements rates and the entropy distributions of the ensemble.
+    For disagreement, we use a binomial test against a success probability estimated from the iid validation data $\Pun$, and for entropy we use a KS-test between
+    the ensemble entropy as computed by \autoref{eq:cdc_entropy_def} (but using a regular ensemble instead of a CDC ensemble) on $\boldQ$ vs $\Pun$.
     \item \textit{Black Box Shift Detection (BBSD)}~\citep{bbsd} is overall best method across numerous synthetic benchmarks for covariate shift detection evaluated by~\citeauthor{failloud}.
     We follow the same evaluation and perform a univariate KS test on each dimension of the softmax output of the base classifier between $\boldQ$ and a held out set from the training distribution.
     Bonferroni correction is used to compute a single $p$-value as the minimum value divided by the number of tests.
-    We guarantee significance using the same permutation approach described in \autoref{sec:hyp}.
+    We guarantee significance using the same permutation approach described in \autoref{sec:the-detectron-test}.
     \item \textit{Relative Mahalanobis Distance (RMD)}~\citep{relmahala} (a method designed specifically for identifying near OOD samples) using the penultimate layer of a pretrained model.
     We test for covariate shift by performing a KS test directly on the distribution of RMD confidence scores derived on $\boldQ$ and $\Pun$.
-    \item \textit{Classifier two sample test (CTST)}~\citep{paz2017revisiting}. Using the same architecture as and initialization as the base classifier we reconfigure the output layer and we train
-    a domain classifier on half the test data with source data labeled as 0 and test data as 1. We then test this models accuracy on the other half of the test data and compare its performance to random chance using a binomial test (see \autoref{sec:hyp} for more details).
+    \item \textit{Classifier two sample test (CTST)}~\citep{paz2017revisiting}.
+    Using the same architecture as and initialization as the base classifier we reconfigure the output layer, and we train
+    a domain classifier on half the test data with source data labeled as 0 and test data as 1.
+    We then test this models accuracy on the other half of the test data and compare its performance to random chance using a binomial test.
     While this method is technically sound it is not suitable for the low data regime where learning a domain classifier on half the test data is unlikely to generalize beyond random performance on the other half.
-    \item \textit{Deep Kernel MMD}~\citep{liu2020learning}. We use the authors original source code available at \url{https://github.com/fengliu90/DK-for-TST} to perform the deep kernel MMD test.
-    \item \textit{H-Divergence}~\citep{zhao2022comparing}. Most similar to our approach, this work proposes a two sample test based on the output of a learning model after training on either source or target data. Specifically, the authors fit a model to both the source dataset $\Pc$, the target dataset $\Qc$ and a uniform mixture $(\Pc+\Qc)/2$.
-    Under the null hypothesis $\Pc=\Qc$ the loss in each case is equal in expectation. However when $\Pc \neq \Qc$, the generalized entropy of the mixture distribution may be be larger. In practice the authors fit three VAE~\citep{DBLP:journals/corr/KingmaW13} models and compute the test statistic $\ell((\Pc+\Qc)/2) -\min(\ell(\Qc), \ell(\Pc))$, where $\ell$ is the VAE loss
-    computed as a sum of the binary cross entropy reconstruction loss and the KL divergence regularizer. The perform 100 runs where the null hypothesis (e.g. sample $\boldQ$ from $\Pc$) and one where it does not. Significance is determined in the standard way be observing if the true test statistic exceeds the $95^\text{th}$ percentile of the test statistic distribution under the null hypothesis.
-    Unfortunately this method, while state of the art on several benchmarks including the MNIST vs Fake MNIST two sample test, demonstrated low utility on more complex tasks with smaller sample sizes. After a discussion with the authors, we attempted to improve the results by first pretraining the VAE to produce valid samples and reconstructions under the source distribution and computing the H-Divergence statistic
-    after finetuning. Despite this effort, we still was low statistical significance with small sample sizes likely due to the noisy nature of training VAE's in the low data regime. We use the authors original source code available here \url{https://github.com/a7b23/H-Divergence}.
+    \item \textit{Deep Kernel MMD}~\citep{liu2020learning}.
+    We use the authors original source code available at \url{https://github.com/fengliu90/DK-for-TST} to perform the deep kernel MMD test.
+    \item \textit{H-Divergence}~\citep{zhao2022comparing}.
+    Most similar to our approach, this work proposes a two sample test based on the output of a learning model after training on either source or target data.
+    Specifically, the authors fit a model to both the source dataset $\Pc$, the target dataset $\Qc$ and a uniform mixture $(\Pc+\Qc)/2$.
+    Under the null hypothesis $\Pc=\Qc$ the loss in each case is equal in expectation.
+    However, when $\Pc \neq \Qc$, the generalized entropy of the mixture distribution may be be larger.
+    In practice the authors fit three VAE~\citep{DBLP:journals/corr/KingmaW13} models and compute the test statistic $\ell((\Pc+\Qc)/2) -\min(\ell(\Qc), \ell(\Pc))$, where $\ell$ is the VAE loss
+    computed as a sum of the binary cross entropy reconstruction loss and the KL divergence regularizer.
+    We perform 100 runs where the null hypothesis (e.g.\ sample $\boldQ$ from $\Pc$) and one where it does not.
+    Significance is determined in the standard way be observing if the true test statistic exceeds the $95^\text{th}$ percentile of the test statistic distribution under the null hypothesis.
+    Unfortunately this method, while state of the art on several benchmarks including the MNIST vs Fake MNIST two sample test, demonstrated low utility on more complex tasks with smaller sample sizes.
+    After a discussion with the authors, we attempted to improve the results by first pre-training the VAE to produce valid samples and reconstructions under the source distribution and computing the H-Divergence statistic
+    after fine-tuning.
+    Despite this effort, we still was low statistical significance with small sample sizes likely due to the noisy nature of training VAE's in the low data regime.
+    We use the authors original source code available here \url{https://github.com/a7b23/H-Divergence}.
 \end{enumerate}
 
 
@@ -95,8 +113,10 @@ We compare the \method\ against several methods for OOD detection, uncertainty e
 \label{subsec:predata}
 We provide full details on the three datasets used in our experiments, including any preprocessing steps and what splits we considered as source domain $\Pc$ and target domain $\Qc$.
 
+\smallbreak
 \xhdr{CIFAR 10/10.1}
-We use the well known CIFAR 10 dataset~\citep{krizhevsky2014cifar} as the source domain for training base classifiers (\autoref{subsec:basclf}) and the new CIFAR 10 test set CIFAR 10.1 containing 2000 class balanced images~\citep{cifar101} as a source of harmful distribution shift. Although the images in CIFAR 10.1 appear to be visually very similar to CIFAR 10 most classifiers trained on CIFAR 10 drop significantly in performance (3\% to 15\%~\citep{cifar101}) when tested on CIFAR 10.1.
+We use the well known CIFAR 10 dataset~\citep{krizhevsky2014cifar} as the source domain for training base classifiers (\autoref{subsec:basclf}) and the new CIFAR 10 test set CIFAR 10.1 containing 2000 class balanced images~\citep{cifar101} as a source of harmful distribution shift.
+Although the images in CIFAR 10.1 appear to be visually very similar to CIFAR 10 most classifiers trained on CIFAR 10 drop significantly in performance (3\% to 15\%~\citep{cifar101}) when tested on CIFAR 10.1.
 \begin{figure}[!htb]
     \centering
     \includegraphics[width=\linewidth]{images/ciafr101.pdf}
@@ -104,6 +124,7 @@ We use the well known CIFAR 10 dataset~\citep{krizhevsky2014cifar} as the source
     \label{fig:cifar101}
 \end{figure}
 
+\smallbreak
 \xhdr{Camelyon 17}
 As described by the original authors~\citep{camelyon} the Camelyon benchmark is a new and challenging image classification dataset consisting of 327,680 color images ($96 \times 96$) extracted from histopathologic scans of lymph node sections.
 Each image is annotated with a binary label indicating the presence of metastatic tissue in the center $32\times 32$ pixel region.
@@ -114,15 +135,16 @@ In contrast, the test domain is collected from hospital $5$, which visually show
     \centering
     \hspace{-1cm}
     \includegraphics[width=\linewidth]{images/camelyon.pdf}
-    \caption{Samples images from the Camelyon 17 dataset~\citep{camelyon}. Using the standard set by the WILDS framework~\citep{wilds} we use hospitals 1-3 as the source domain for training and validating models, and hospital $5$ as the target domain for assessing distribution shift.}
+    \caption{Samples images from the Camelyon 17 dataset~\citep{camelyon}. Using the standard set by the WILDS framework~\citep{wilds} we use hospitals 1--3 as the source domain for training and validating models, and hospital $5$ as the target domain for assessing distribution shift.}
     \label{fig:camelyon}
 \end{figure}
 
+\smallbreak
 \xhdr{UCI Heart Disease}
 The UCI Heart Disease (UCI-HD) dataset~\citep{misc_heart_disease_45} consists of 76 attributes collected from four unique patient databases in Cleveland, Hungary, Switzerland, and the VA Long Beach.
 We select nine features out of the commonly used 14 to minimize the portion of missing values.
 These features are \{age, sex, chest pain type, resting blood pressure, serum cholesterol, fasting blood sugar, resting electrocardiographic results, maximum heart rate achieved, exercise-induced angina\}.
-The prediction task is to determine the diagnosis of heart disease (also known as angiographic disease status), which is given in a range from 0-4, where 0 indicates healthy and 1-4 indicates a severity level based on the narrowing of major blood vessels.
+The prediction task is to determine the diagnosis of heart disease (also known as angiographic disease status), which is given in a range from 0--4, where 0 indicates healthy and 1--4 indicates a severity level based on the narrowing of major blood vessels.
 Following prior work~\citep{Chaki2015ACO} we only consider the simplified binary classification task for differentiating patients with a normal angiographic status (label of 0) from those with abnormal status (label $>0$).
 We select the source domain as the Cleveland and Hungary databases and the target domain as the Switzerland and VA Long Beach databases.
 A graphical overview of the marginal feature distributions for the source and target domain is shown in \autoref{fig:uci}.
@@ -138,25 +160,4 @@ A graphical overview of the marginal feature distributions for the source and ta
 To allow for out-of-the-box training of deep neural networks on the UCI HD dataset, we use the missing value synthesis functional in Wolfram Mathematica~\citep{Mathematica}.
 The algorithm uses density estimation and mode finding on conditioned distributions to synthesize missing values.
 See the language guide page titled \href{https://www.wolfram.com/language/12/high-level-machine-learning/synthesize-missing-values-in-numeric-data.html?product=language}{Synthesize Missing Values in Numeric Data} for a more detailed description.
-To aid in future research, we provide a copy of our processed dataset in \href{https://anonymous.4open.science/r/detectron-D7BA/data/uci_heart_torch.pt}{\texttt{<our github repo>/data/uci\_heart.pt}}.
-
-A summary of the three datasets used as well as the description of shifts and effects on model performance is provided in \autoref{tab:datasets}.
-\begin{table}[!htb]
-    \centering
-    \setlength\tabcolsep{1.5pt}
-    \renewcommand{\arraystretch}{0.5}
-    \small
-    \caption{\small \textbf{Datasets:} We investigate three different forms of covariate shift. To verify that these shifts are indeed harmful to the models, we report performance in both the shifted and unshifted domains.
-    Examples and further descriptions of unshifted/shifted splits of each dataset are given in \autoref{sec:data}.}
-    \vspace{.5cm}
-    \resizebox{.9\textwidth}{!}{
-        \begin{tabular}{cccccc}
-            \toprule[1.5pt]
-            Domain/Task & {Dataset} & \thead{Shift} & \thead{Metric} & \thead{(Unshifted)} & \thead{(Shifted)} \\\midrule[1.5pt]
-            \thead{Natural Images \\\emph{Object classification}} & \thead{CIFAR-10/10.1 \\~\citep{cifar101}} & \thead{Data Collection \\ Process} & \thead{Accuracy} & \thead{0.87 (Resent18)} & \thead{0.77 (Resent18)} \\\midrule
-            \thead{Histopathological Images \\ \emph{Metastases Detection}} & \thead{Camelyon-17 \\\citep{camelyon}} & \thead{Different \\Hospitals} & \thead{Accuracy} & \thead{0.93 (Resent18)} & \thead{0.81 (Resent18)} \\\midrule
-            \thead{Tabular Medical Data \\\emph{Angiographic Status}} & \thead{UCI Heart Disease \\\citep{misc_heart_disease_45}} & \thead{Different \\Countries} & \thead{AUROC} & \thead{0.88 (xgboost)\\0.85 (MLP)} & \thead{0.70 (xgboost)\\0.42 (MLP)} \\\midrule
-        \end{tabular}}
-    \label{tab:datasets}
-    \vspace{-3mm}
-\end{table}
+To aid in future research, we provide a copy of our processed dataset in \href{https://github.com/tomginsberg/detectron/blob/main/data/uci_heart_torch.pt}{here}.

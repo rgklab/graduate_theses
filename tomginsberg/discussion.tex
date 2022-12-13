@@ -1,27 +1,31 @@
-\textit{Overall Performance}.
+\section{Overall Performance}
 We observe in the bottom rows of \autoref{tab:results} that \method\ methods outperform all baselines across all three tasks.
 This confirms our intuition that designing distribution tests based specifically on available data and the outputs of learning algorithms is a promising avenue for improving existing methods in the high dimensional/low data regime.
 
-\textit{Sample Efficiency}.
+\section{Sample Efficiency}
 For more significant shifts (Camelyon and UCI), we see in \autoref{tab:results} the most significant improvements over baselines in the lowest sample regime (10 data points).
 The fine-grained result in \autoref{fig:uci_plot} shows that CTST catches up to \method\ at $40$ samples while deep ensemble, BBSD, and Mahalanobis catch up at $100$.
 
-\textit{Disagreement vs Entropy}.
+\section{Disagreement vs Entropy}
 For the experiments on imaging datasets with deep neural networks \method\ (Disagreement) often performs nearly as well as \method\ (Entropy),
 while \method\ (Entropy) is strictly superior for the UCI dataset.
 While we recommend entropy as the method to maximize test power, disagreement is a more interpretable statistic as it is correlates well with the portion of misclassified samples (see (right) \autoref{fig:disrates}).
 
-\textit{Comparison to baselines}.
-Amongst the baselines, there is no clear best method. Although on average, ensemble entropy is superior on CIFAR, MMD-D on Camelyon, and CTST on UCI. Our method may be thought of as a combination of ensembles, CTST, and H-Divergence. As ensembles, we leverage the variation in outputs between a set of classifiers; as CTST, we learn in a domain adversarial setting; and as H-Divergence, we compute a test statistic based on data that a model was trained on.
+\section{Comparison to Baselines}
+Amongst the baselines, there is no clear best method.
+Although on average, ensemble entropy is superior on CIFAR, MMD-D on Camelyon, and CTST on UCI. Our method may be thought of as a combination of ensembles, CTST, and H-Divergence.
+As ensembles, we leverage the variation in outputs between a set of classifiers;
+as CTST, we learn in a domain adversarial setting;
+and as H-Divergence, we compute a test statistic based on data that a model was trained on.
 Lastly, while MMD-D and H-Divergence were shown to be the previous state-of-the-art, their performance was validated only on larger sample sizes ($\geq$ 200).
 
-\textit{On Tabular Data}.
+\section{On Tabular Data}
 The \method\ shows promise for deployment on tabular datasets (bottom right of\ \autoref{tab:results} and \autoref{fig:uci_plot}),
 where (1) the computational cost of training models is low, (2) the model agnostic nature of the \method\ is beneficial as random forests often outperform neural networks in tabular data~\citep{tabdatasurvey}, and
 (3) based on our discussions with medical professionals, the ability to detect covariate shift from small test sizes is of particular interest in the healthcare domain
 where population shift is a constant problem burden for maintaining the reliability of deployed models.
 
-\emph{On computational cost: } Our method is more computationally expensive than some existing methods for detecting shifts such as BBSD and Mahalanobis Scores, but is similar complexity to other approaches such as Ensembles, MMD-D and H-Divergence which may require training multiple deep models.
+\section{On Computational Cost} Our method is more computationally expensive than some existing methods for detecting shifts such as BBSD and Mahalanobis Scores, but is similar complexity to other approaches such as Ensembles, MMD-D and H-Divergence which may require training multiple deep models.
 However, as the \method\ leverages a pretrained model already in deployment, we find in practice that only a small number of training rounds are required to create each CDC.
 For instance, on CIFAR 10/10.1 a CDC ensemble of 5 models using a ResNet 18 architecture can train in under $\approx 2$m using an unoptimized PyTorch implementation on 1 GPU.
 Furthermore, looking at the runtime behavior in \autoref{fig:runtime} we see that while allowing for more computation time increases the fidelity of the \method,
@@ -32,10 +36,8 @@ where each data point is a decision that affects a human being, we believe the a
 Having established the utility, accelerating the \method\;as well as building a deeper understanding of the runtime performance tradeoffs, is fertile ground for future work.
 
 \begin{figure}[!htb]
-    \vspace{-2mm}
     \centering
     \hspace*{2mm}\includegraphics[width=\linewidth]{images/runtime.pdf}
-    \vspace{-7mm}
     \caption{\small \textbf{Runtime Characteristics:} We train 100 random runs of CDCs on 100 samples from CIFAR 10 and 10.1 and compute the \textit{disagreement satistic} as the difference $\psi\coloneqq \mathbb{E}[\phi_\boldQ - \phi_\boldP]$.
     While we see that while $\psi$ peaks near 50 training batches, only 10 batches are required for the Detectron disagreement test to reach an area under the TPR vs FPR curve (AUROC) of nearly 1 (i.e., perfect discrimination).
     Training CDCs for too long eventually lowers $\psi$ as $\mathbb{E}[\phi_\boldQ] \approx \mathbb{E}[\phi_\boldP]\approx 1$ meaning CDCs eventually overfit to disagreeing on all of their data.}

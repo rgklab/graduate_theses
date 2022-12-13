@@ -2,11 +2,23 @@ Our work presents a practical application of PQ learning towards creating a meth
 On both neural networks and random forests, we showcase the efficacy of our method in being sensitive enough to detect covariate shift using a small number of unlabelled examples across several real-world datasets.
 We remark on several characteristics of our algorithm that represent potential directions for future work:
 
-\emph{Beyond Classification: }Our work here focuses on the case of classification (since a large number of pre-existing benchmarks in the literature focus on the same).
-However, we believe there is a viable extension of our work to regression models where constrained predictors are explicitly learned to maximize test error according to the existing metric, such as mean squared error.
+\xhdr{On Generalization and Model Complexity} The definition of the Detectron specifies the use of the same function class for identifying shift as is used in the original prediction problem.
+The Detectron may fail to detect harmful shifts in cases where the base model is learned from an underspecified function class. \autoref{sec:complexity} provides additional context, examples and ways to mitigate this limitation.
+The precise relationships between model complexity, generalization error, and test power are interesting directions for future work.
+
+\xhdr{Beyond Classification}\\
+Our work here focuses on the case of classification, however, we believe there is a viable extension of our work to regression models where constrained predictors are explicitly learned to maximize test error according to the existing metric, such as mean squared error.
 We leave this exploration for future work.
 
-\emph{Beyond Covariate Shifts: }While covariate shift is the only type of shift that can be discovered from unlabeled data without additional assumptions, we acknowledge that other types of shift, such as label and concept shift, are prevalent in the real world.
-Building learning-based methods to identify these types of shifts is another direction for future work.
-
-Finally, we wish to highlight that while auditing systems such as the \method\ show promise to ease concerns when using learning systems in high-risk domains, practitioners interfacing with these systems should not place blind trust in their outputs.
+ \xhdr{Beyond Covariate Shifts}\\
+While covariate shift is the only type of shift that can be discovered from unlabeled data,
+ building learning-based methods to identify label and concept shift is another direction for future work.
+%Finally, we wish to highlight that while auditing systems such as the \method\ show promise to ease concerns when using learning systems in high-risk domains, practitioners interfacing with these systems should not place blind trust in their outputs.
+\section*{Ethics Statement}
+The speed of the adoption of ML into risk scenarios raises a critical need for methods that ensure trustworthiness and reliability.
+However, over-reliance on such methods brings about critical ethical considerations.
+As we have seen, Detectron is highly sensitive to picking out discriminative features of data distributions, and, as such, its usage may prevent practitioners from deploying models in new environments.
+As a result, the individuals in those environments may become subject to unfair treatment.
+For instance, if Detectron determines a model trained on hospital A safe to deploy in hospitals B and C, but not in D, the individuals in population D may experience a lower level of care.
+In a real example, Detectron, when tested on a model trained on a subset of light-skinned celebrities (CelebA dataset--\cite{liu2015faceattributes}), quickly raises the alarm when given images of those that are not light-skinned.
+While Detectron can help mitigate potential disasters encountered by deploying models in hazardous domains, it should not be an excuse for practitioners to avoid collecting richer and more diverse datasets as a primary strategy to ensure model reliability.

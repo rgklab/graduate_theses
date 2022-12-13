@@ -1,19 +1,20 @@
 \section{Problem Setup}\label{sec:problem-setup}
 Let $f: X\to \mathbb{R}^N $ be a classifier from a function class $F$ that maps from space of covariates $X$ to a discrete probability distribution over classes $Y=\{1,\ldots,N\}$ i.e.,
 \[f(x)=[f(x)_1, f(x)_2, \ldots, f(x)_N]^\top\text{ s.t. }f(x)_i \geq 0\ \forall\ i\in Y \text{ and } \|f(x)\|_1 = 1\]
-We assume $f$ was trained on a dataset of \textbf{labeled} samples $\boldP=\{(x_1,y_1),\ldots,(x_{|\boldP|}, y_{|\boldP|})\}$ where each $x_i$ is drawn identically from a distribution $\Pc$ over $X$, and
-each label $y_i\in Y$ corresponds to the ground truth label for the classification problem of interest.
-In deployment, $f$ is made to predict on new \textbf{unlabeled} samples $\boldQ=\{\tilde{x}_1,\ldots,\tilde{x}_{|\boldQ|}\}$ from a distribution $\Qc$ over $X$.
+We denote the prediction of a model $f(x)$ as $\hat{f}(x)\coloneq \argmax_{i\in \{1,\dots,N\} }f(x)$ which corresponds to the class with the maximum predicted probability.
+We assume $f$ was trained on a dataset of \textbf{labeled} samples $\boldP = \{(x_i,y_i)\}_{i=1}^n$ where each $x_i$ is drawn identically from a distribution $\Pc$ over $X$, and
+each label $y_i \in Y$ corresponds to the ground truth label for the classification problem of interest.
+In deployment, $f$ is made to predict on new \textbf{unlabeled} samples $\boldQ = \{\tilde{x}_i\}_{i=1}^m$ ($\tilde{x}_i$ from a distribution $\Qc$ over $X$.
 Our high level goal is to determine whether $f$ may be trusted to do so accurately.
 More specifically, the problem we address is how to automatically detect, with high statistical power, from only a \textit{small} set of samples $\boldQ$,
 if the new covariate distribution $\Qc$ has shifted from $\Pc$.
 In addition, we wish to detect true shifts efficiently and with a provably correct lower bound on false positive rate (the rate at which we detect shift when in reality there is no shift).
-The false positive rate is also referred to as the probability of making a type II error, or the significance level and is denoted by the symbol $\alpha$.
+%The false positive rate is also referred to as the probability of making a type II error, or the significance level and is denoted by the symbol $\alpha$.
 
 Our problem will differ from a standard two sample testng scenario in several critical ways (1) we may assume access to many more samples from $\Pc$
 compared to $\Qc$; motivated by the setting where we wish to detect shift quickly, and hence from as few samples as possible
-(2) we have access to a robust classifier $f$ that performs reasonably well on held out samples from $\Pc$ as well as the learning algorithm $L$ used to train it, and
-(3) we seek to only detect shifts that are likely to reduce classification robustness of $f$ --- we refer to this shift characterization \textit{harmful covariate shift} and elaborate on it in the next section.
+(2) we have access to a robust classifier $f$ that performs \textit{reasonably well} (e.g. could realistically be deployment) on held out samples from $\Pc$ as well as the learning algorithm $L$ used to train it.
+(3) We seek to only detect shifts that could reduce classification robustness of $f$ --- we refer to this shift characterization \textit{harmful covariate shift} and elaborate on it in the next section.
 
 
 \section{Harmful Covariate Shift}\label{sec:harmful-covariate-shift} A shift in the data distribution is not always harmful.
@@ -41,27 +42,28 @@ However, in terms of pure statistics one could not argue that there is no covari
 To support this claim we run the simplest possible two sample test where we take the mean intensity of each image in $\boldP$ and $\boldQ$ using only a sample size of $|\boldP|=|\boldQ|=10$ and
 run a Kolmogorov Smirnov Test~\citep{kstest} over $1,000$ permutations to calculate a test power of $0.981\pm 0.004$ at the strongest significance level $\alpha=0$.
 
-The examples presented motivate the point that practical heuristics, and problem structure can lead to models generalizing to a more broad range of distributions than can be characterized by just the training set.
+The MNIST example motivates the point that practical heuristics, and problem structure can lead to models generalizing to a more broad range of distributions than can be characterized by just the training set.
 And furthermore, that when two sample tests are decoupled with respect to the heuristics and structures of the domain, they lose their informative abilities.
-To formalize this notion we define the induced \textit{generalization set} $\Rc$ which will in general depend on the model architecture, learning algorithm and training dataset.
-$\Rc$ is the abstract set of distributions, beyond simply the training distribution, that a model generalizes to.
+To formalize this notion we define the informal idea of the \textit{generalization set} $\Rc$ as the set of distributions, beyond simply the training distribution, that a model generalizes to.
+$\Rc$ is an abstract object which may in general depend on the model architecture/function class $F$, learning algorithm $L$ and training dataset $\boldP$.
 While $\Rc$ is difficult if not impossible to characterize exactly, we seek a practical method for detecting shift that is explicitly tied to $\Rc$.
 
-Our approach is based both on PQ learning and intuition from learning theory: if we can find a set of classifiers that achieve the same generalization
-set $\Rc$ but behave inconsistently on samples from a distribution $\Qc$, then $\Qc$ must not be a member $\Rc$.
-However, since it is not possible to know $\Rc$ for a given classifier we introduce a more practical definition of harmful covariate shift
+Our approach is based both on PQ learning, from learning theory and learning dynamics.
+A one sentence summary is: if we can find a set of classifiers $\{g_1,\ldots, g_\aleph\}\subseteq F$ that achieve the same generalization
+set as $f$ but behave inconsistently with respect to $f$ on samples from a distribution $\Qc$, then $\Qc$ must not be a member $\Rc$.
+Since it is not possible to know $\Rc$ for a given classifier we introduce a more practical definition of harmful covariate shift
 based on the learning algorithm and source dataset --- whose complex interaction is what induces $\Rc$.
 
 \begin{definition}
     [ Harmful Covariate Shift (HCS) ]
     Let $F$ be a family of decision functions that are learnable via a learning algorithm ${L}$ from a set of samples drawn from a source distribution $\Pc$.
     We say a covariate shift from distributions $\Pc \to \Qc$ over $X$ is $(\ell, \alpha, L, \Pc)$-harmful,
-    if there exists a subset of models of two or more models $\mathbf{f} \subseteq F$ that achieve a source domain loss $\mathbb{E}_{\Pc}[\ell(f(x), x)] \leq \alpha$ for all $f\in \mathbf{f}$ while
+    if there exists a finite subset of models of two or more models $\mathbf{f} \subseteq F$ that achieve a source domain loss $\mathbb{E}_{\Pc}[\ell(f(x), y)] \leq \alpha$ for all $f\in \mathbf{f}$ while
     being more likely to disagree with each other on an unseen sample from $\Qc$ compared to $\Pc$.
     \begin{equation}
         \begin{aligned}
-            \exists\ \mathbf{f}\subseteq F, &\text{ s.t. } \forall f\in \mathbf{f}\ \ \mathbb{E}_{\Pc}[\ell(f(x), x)] \leq \alpha \text{ and } \\
-            &\mathbb{P}_{x\sim \Qc}(\exists\ f_i, f_j \in \mathbf{f}\text{ s.t. }f_i(x)\neq f_j(x)) > \mathbb{P}_{x\sim \Pc}(\exists\ f_i, f_j \in \mathbf{f}\text{ s.t. }f_i(x)\neq f_j(x))
+            \exists\ \mathbf{f}\subseteq F, &\text{ s.t. } \forall f\in \mathbf{f}\ \ \mathbb{E}_{\Pc}[\ell(f(x), y)] \leq \alpha \text{ and } \\
+            &\mathbb{P}_{x\sim \Qc}(\exists\ f_i, f_j \in \mathbf{f}\text{ s.t. }\hat{f}_i(x)\neq \hat{f}_j(x)) > \mathbb{P}_{x\sim \Pc}(\exists\ f_i, f_j \in \mathbf{f}\text{ s.t. }\hat{f}_i(x)\neq \hat{f}_j(x))
         \end{aligned}\label{eq:hcs}
     \end{equation}
     In plainer words, we define harmful covariate shift based on the existence of multiple \textit{good} models on $\Pc$ that we assume learn the same generalization set, but
@@ -70,13 +72,14 @@ based on the learning algorithm and source dataset --- whose complex interaction
 
 
 \section{Constrained Disagreement Classifiers}\label{sec:constrained-disagreement-classifier-(cdc)}
-Our strategy for detecting HCS will be to create an ensemble of \textit{constrained disagreement classifiers} ($g_1, \ldots, g_\aleph $),
+Our strategy for detecting HCS will be to create an ensemble of \textit{constrained disagreement classifiers} $\{g_1, \ldots, g_\aleph \}$,
 classifiers created by the same learning algorithm as $f$ that are constrained to predict consistently (i.e., predict the same as $f$) on $\boldP$ but as differently as possible on $\boldQ$.
-If $\Qc$ is within $\Rc$ then such an ensemble will fail to predict differently, as the invariances induced by $L$ and $\boldP$ will not allow a high degree of uncertainty within $\Rc$.
+If $\Qc$ is within $\Rc$ then such an ensemble will fail to predict differently, as the invariances induced by $L$ and $\boldP$ by definition do not allow a high degree of uncertainty within $\Rc$.
 However, when we can find an ensemble that exhibits inconsistent behaviour on $\Qc$, there must be covariate shift that explicitly lies outside $\Rc$.
 To make the idea of constrained disagreement classifiers tangible we propose a simple definition which we will translate into a learning algorithm in the following sections.
 
 \begin{definition}
+    \label{def:cdc}
     [Constrained Disagreement Classifier (CDC)]
     A constrained disagreement classifier $g_{(f, \boldP, \boldQ)}$, or simply $g$ or $g_\boldQ$ if $f$, $\boldP$ and $\boldQ$ are clear with context, is a classifier with the following properties:
     \begin{enumerate}
@@ -115,9 +118,27 @@ Beyond the concept of shift harmfulness, we will see in our methods and empirica
 \section{Connection to PQ Learning}\label{sec:relationship-with-pq-learning}
 
 As our work builds on PQ learning, we provide a summary of the original framework and clearly state the distinctions in our methodology.
-In PQ learning we seek a selective classifier $h$ that achieves
+In PQ learning we seek a selective classifier $\left. h\right|_{S}$ that achieves
 a bounded tradeoff between its in distribution rejection rate $\text{rej}_h(\mathbf{x})$ and its out of distribution error $\operatorname{err}_h(\tilde{\mathbf{x}})$ with respect to a ground truth decision function $d$.
-Formally, this tradeoff is defined using the following learning theoretic bound.
+Formally, a selective classifier predicts according to a base classifier $h$ if the input $x$ is inside some set $S$ and otherwise rejects/abstains from predicting.
+\begin{equation}
+    \left. h\right|_{S}(x) \coloneqq \begin{cases}
+                                         h(x) & x\in S \\
+                                         \text{reject} & x\not\in S
+    \end{cases}
+    \label{eq:selective_classifier_defn}
+\end{equation}
+The error and rejection rate of a selective classifier are defined for a selective classifier $\left. h\right|_{S}$ with respect to a distribution $\mathcal{P}$ as:
+\begin{equation}
+    \text{rej}_{h}(S) \coloneqq \mathbb{P}_{x\sim\mathcal{P}}\left[x\not \in S\right]\quad \text{err}_h(S) \coloneqq \mathbb{P}_{x\sim\mathcal{P}}\left[h(x) \neq y\land x\in S\right]
+\end{equation}
+Where $y=d(x)$ is the ground truth label for $x$.
+The \textit{empirical} rejection and error rates for a set of samples $\mathbf{x}=\{x_i\}_{i=1}^n$ and corresponding labels $\mathbf{y}=\{y_i\}_{i=1}^n$ are similarly defined as:
+\begin{equation}
+    \text{rej}_{h}(\mathbf{x}) \coloneqq \frac{1}{n}\sum_{i=1}^n \delta_{x_i\not \in S}\quad \text{err}_h(\mathbf{x}) \coloneqq \frac{1}{\sum_{i=1}^n x_i\in S} \sum_{i=1}^n \left(\delta_{x_i\neq y_i} \times \delta_{x_i\in S}\right)
+\end{equation}
+\noindent
+Using this construction \citeauthor{pqlearn} define PQ learning with the following learning theoretic bound.
 
 \begin{definition}[{PQ learning~\citep{pqlearn}}]
     Learner $L$ $(\epsilon, \delta, n)$-PQ-learns $F$ if for any distributions $\Pc, \Qc$ over $X$ and any ground truth function $d \in F$, its output $h\coloneqq L(\boldP, d(\boldP), \boldQ)$ satisfies
@@ -137,49 +158,36 @@ By tackling the above issues we derive a practical PQ learning algorithm and pro
 To train a classifier to disagree in the binary setting, it suffices to flip the labels.
 However, in the multi-class classification, it is unclear what a good objective function is.
 We formulate an explicit loss function that can be minimized via gradient descent to learn a CDC.
-For classification problems, letting $\hat{y} \coloneqq g(x_i)$ be the predictive distribution over $N$ classes, $\mathbf{f}(x_i)\in \{1,\dots N\}$
-the label predicted by $f$ and $[\cdot ]$ a binary indicator, we define the \textit{disagreement-cross-entropy} (DCE) $\small \tilde{\ell}$ as:
+For classification problems, letting $g(x_i)$ be the predictive distribution over $N$ classes, $\hat{f}(x_i)\in \{1,\dots N\}$
+the label predicted by $f$ and $\mathbb{I}[\cdot ]$ a binary indicator, we define the \textit{disagreement-cross-entropy} (DCE) $\small \tilde{\ell}$ as:
 \begin{equation}
-    \tilde{\ell}(\hat{y}, f(x_i)) =  \frac{1}{1-N} \sum_{c=1}^N [{f(x_i) \neq c}] \log(\hat{y}_c)
+    \tilde{\ell}_{\text{DCE}}(g(x_i), f(x_i)) =  \frac{1}{1-N} \sum_{c=1}^N \mathbb{I}[{\hat{f}(x_i) \neq c}] \log(g(x_i)_c)
     \label{eq:anitcross}
 \end{equation}
 $\tilde{\ell}$ corresponds to taking the cross entropy of $\hat{y}$ with the uniform distribution over all classes except $f(x_i)$.
 Since the primary criteria is that $g(x_i)$ disagrees with $f(x_i)$, $\tilde{\ell}$ is designed to minimize the probability of $g$'s prediction for the output of $f$'s while maximizing its overall entropy.
 Our definition of $\tilde{\ell}$ is significantly more stable to optimize compared to simply maximizing the regular cross entropy as it has a bounded global minimum.
 
-\xhdr{Elaborating on DCE}
-Consider a model that outputs a distribution $\{p_1, p_2, 1-p_1-p_2\}$ over $3$ classes, suppose we would like to train it to \textbf{not} output high probability for class $3$ i.e., minimize $p_3=1-p_1-p_2$.
-An intuitive approach would be to \textit{maximize} the standard cross entropy loss $-\log(1-p_1-p_2)$ that one would equivalently \textit{minimize} if trying to output high probability for class $3$.
-We show in \autoref{fig:dce} that this objective is unstable whereas the DCE $-\frac{1}{2}(\log(p_1) + \log(p_2))$ is convex, and has a bounded minimum corresponding to $p_1=p_2=1/2$.
-In practice if one wishes a loss function with a minimum of zero it suffices to subtract $ \log(N-1)$ from \autoref{eq:anitcross}.
-A visual description of the DCE is provided in \autoref{fig:dce}.
-\begin{figure}[!htb]
-    \centering
-    \includegraphics[width=\linewidth]{images/dce.pdf}
-    \caption{Consider a classifier outputs a distribution $\{p_1, p_2, 1-p_1-p_2\}$ over $3$ classes. We compare the optimization landscape induced by either (left) minimizing the negative cross entropy for the target $p_3=1-p_1-p_2$ (e.g trying not to predict class $3$) (center) minimizing our \textit{disagreement cross entropy} (DCE) for the same target
-    and (right) minimizing the regular cross entropy (e.g trying to predict class $3$). We observe that naively minimizing the negative cross entropy results in an unbounded minimum, while the DCE is significantly more stable and scales similarly to the regular cross entropy. Gradients are overlaid to help better visualize the 3D geometry.}
-    \label{fig:dce}
-\end{figure}
-
 Our goal is to agree on $\boldP$ and disagree on $\boldQ$.
 Consequently, we learn with the loss in \autoref{eq:loss}. $\ell$ denotes the standard cross entropy loss and $\tilde{\ell}$ is the disagreement cross entropy. $\lambda$ is a scalar parameter that controls the trade off between agreement and disagreement.
 \begin{equation}
-    \mathcal{L}_g(\{x_1, \ldots x_n\}) = \frac{1}{n}\left(\sum_{i=1}^n \ell(g(x_i), y_i)[x_i\in \boldP] + \lambda\sum_{i=1}^n \tilde{\ell}(g(x_i), f(x_i))[x_i\in \boldQ] \right)
+    \mathcal{L}_{\text{CDC}}(\boldP,\boldQ) = \frac{1}{|\boldP|+|\boldQ|}\left(\sum_{(x,y)\in \boldP} \ell(g(x), y) + \lambda \sum_{\tilde{x}\in \boldQ} \tilde{\ell}_{\text{DCE}}(g(\tilde{x}), f(\tilde{x})) \right)
     \label{eq:loss}
 \end{equation}
-
-When learning CDCs in practice, $\mathcal{L}_g$ should be combined with any additional regularization and data augmentation used in the original training process of $f$ to ensure that we retain the true generalization region of $f$.
+When learning CDCs in practice, $\mathcal{L}_\text{CDC}$ should be combined with any additional regularization and data augmentation used in the original training process of $f$ to ensure that we retain the true generalization region of $f$.
 Furthermore, training and validation metrics must be closely monitored on unseen samples from $\Pc$ to ensure that $g$ achieves similar generalization performance on $\Pc$.
 
-\xhdr{Choosing $\lambda$} In the original formulation of Rejectron, selective classifiers are trained on a dataset consisting of $\boldP$ replicated $|\boldP|$ times and $\boldQ$.
-Calling an ERM oracle on this data ensures that a misclassification on $\boldP$ is significantly more costly than one on $\boldQ$ but requires $\Omega(|\boldP|^2 )$ samples, an impractical number for large datasets.
-We show that instead we can choose the scalar parameter $\lambda$ in \autoref{eq:loss} to set learning $\boldP$ as the primary learning objective and only when it cannot be improved, we allow $g$ to learn how to disagree on $\boldQ$.
+\subsection{Choosing $\lambda$}
+%In the original formulation of Rejectron, selective classifiers are trained on a dataset consisting of $\boldP$ replicated $|\boldP|$ times and $\boldQ$.
+%Calling an ERM oracle on this data ensures that a misclassification on $\boldP$ is significantly more costly than one on $\boldQ$ but requires $\Omega(|\boldP|^2 )$ samples, an impractical number for large datasets.
+We show that we can choose the scalar parameter $\lambda$ in \autoref{eq:loss} to set learning $\boldP$ as the primary learning objective and only when it cannot be improved, we allow $g$ to learn how to disagree on $\boldQ$,
+thus relaxing the original constrained optimization objective to a tractable weighted objective.
 The reasoning is a simple counting argument.
 Suppose agreeing on each sample in $\boldP$ incurs a reward of $1$ and disagreeing with each sample in $\boldQ$ a reward of $\lambda$.
 To encourage agreement on $\boldP$ as the primary objective, we set $\lambda$ such that the extra reward obtained by going from \textit{zero} to \textit{all} disagreements on $\boldQ$ is less than that achieved with only one extra agreement on $\boldP$, this gives $\lambda|\boldQ| < 1$.
 Practically, we chose $\lambda=1/(|\boldQ| + 1)$ and find that no tuning is required.
 
-\xhdr{Generalizing Beyond Cross Entropy}     When training models with arbitrary discrete or generally non-differentiable with respect their objective (e.g., random forest), we must find a more general solution for creating CDCs.
+\subsection{Generalizing Beyond Cross Entropy}\label{subsec:gen_beyond}     When training models with arbitrary discrete or generally non-differentiable with respect their objective (e.g., random forest), we must find a more general solution for creating CDCs.
 Such a solution should (1) reduce to the DCE when the model is, in fact, continuous and trained using the standard cross-entropy, and (2) reduces to label flipping when $N=2$ (binary classification).
 Our simple solution is to replicate every sample in $\boldQ$ exactly $N-1$ times and create a unique label for each
 from the set $\mathcal{S}\coloneqq \{1,\dots,N\}\backslash \{t\}$ where $t$ is the disagreement target.
@@ -187,19 +195,21 @@ We also give each a sample a weight of $1/(N-1)$.
 In the case of $N=2$, this corresponds to no replication and simply assigning the opposite label.
 In the case where the model learns by cross-entropy, this generalization corresponds to the DCE in \autoref{eq:anitcross}; we provide a simple proof below.
 \smallbreak\noindent
-Starting with the definition of the cross entropy
-\begin{equation}
-    \text{CE}(f(x), y) = -\sum_{c=1}^N [{c=y}] \log(f(x)_c)
-\end{equation}
-Now we consider the sum of the cross entropy for each label in $\mathcal{S}$:
-\begin{align}
-    \sum_{y\in \mathcal{S}} \text{CE}(f(x), y) &= -\sum_{y\in \mathcal{S}} \sum_{c=1}^{N}[{c=y}]\log(f(x)_c) \\
-    &=-\sum_{c=1}^{N}[{c\in \mathcal{S}}]\log(f(x)_c)\\
-    &= (N-1) \hat{\ell}_\text{DCE}(f(x), y)
-\end{align}
-Hence when giving each sample a weight of $1/(N-1)$ we recover the exact from of DCE.
-\smallbreak
-\xhdr{Ensembling} To learn richer disagreement rules, we create an
+\begin{proof}
+    Starting with the definition of the cross entropy
+    \begin{equation}
+        \text{CE}(f(x), y) = -\sum_{c=1}^N \mathbb{I}[{c=y}] \log(f(x)_c)
+    \end{equation}
+    Now we consider the sum of the cross entropy for each label in $\mathcal{S}$:
+    \begin{align}
+        \sum_{y\in \mathcal{S}} \text{CE}(f(x), y) &= -\sum_{y\in \mathcal{S}} \sum_{c=1}^{N}\mathbb{I}[{c=y}]\log(f(x)_c) \\
+        &=-\sum_{c=1}^{N}\mathbb{I}[{c\in \mathcal{S}}]\log(f(x)_c)\\
+        &= (N-1) \tilde{\ell}_\text{DCE}(f(x), y)
+    \end{align}
+    Hence when giving each sample a weight of $1/(N-1)$ we recover the exact from of DCE.
+\end{proof}
+
+\subsection{Ensembling} To learn richer disagreement rules, we create an
 ensemble of CDCs where the $k^{\text{th}}$ model is trained only to disagree on the subset of
 $\boldQ$ that has yet to be disagreed on by models $1$ through $k-1$.
 The final disagreement rate $\phi_\boldQ$ is the fraction of unlabelled samples where any CDC provides an alternate decision from $f$.
@@ -218,15 +228,15 @@ In what follows we use this rate to detect shift.
     \KwOut{Constrained Disagreement Classifier $g_{(f,\boldP, \boldQ)}$}
     $\hat{\boldQ}\ \gets\ \{({x}, f({x}))\ |\ \hat{x}\in \boldQ\}$ \tcp*{infer pseudo labels on $\boldQ$ using $f$}
     \tcp*{create a batched dataloader using $\boldP \text{ and } \boldQ$}
-    ${\boldP\boldQ}\ \gets\ $Batched($\{(x,y)\ |\ (x,y)\in \boldP \land (x,y)\in \boldQ$\})
+    ${\boldP\boldQ}\ \gets\ $Batched($\{(x,y)\ |\ (x,y)\in \boldP \land (x,y)\in \boldQ$\})\\
     $g\ \gets\ f$\tcp*{Initialize $g$ with $f$}
     $m_0\ \gets\ \mathcal{M}(f, \boldP_{\text{val}})$ \tcp*{Compute the validation performance of $f$}
     \While{$\mathcal{M}(f, \boldP_{\text{val}}) > m_0 - \varepsilon$ and iterations $<\ k$}{
-        \tcp*{Training epoch over $\hat{\boldP\boldQ}$}
+        \tcp*{Training epoch over ${\boldP\boldQ}$}
         \For{batch $\ \in \boldP\boldQ$}{
             $x_P,\ y_P\ \gets\ \{(x, y)\ |\ (x,y)\in\text{ batch}\text{ and }(x,y)\in {\boldP}_{\text{train}}\}$\\
             $x_Q,\ y_Q\ \gets\ \{(x, y)\ |\ (x,y)\in\text{ batch}\text{ and }(x,y)\in \hat{\boldQ}\}$\\
-            \tcp*{Update $g$ using an existing learning algorithm for $(x_P, y_P)$ and the appropriate disagreement update for $(x_Q, y_Q)$}
+            \tcp*{Update $g$ to minimize the loss in \autoref{eq:loss} and base loss $\ell$ defined by $L$}
             $g\ \gets \text{Update}(g, L, (x_P, y_P), (x_Q, y_Q))$
         }
     }
@@ -242,9 +252,9 @@ We would statistically compare this disagreement rate using a $2\times 2$ exact 
 The following shows that this results in a provably correct method to detect shift with high probability using only finite samples.
 \begin{theorem}[Disagreement implies covariate shift]
     \label{th:dis}
-    Let $f$ be a classifier trained on dataset $\boldP$ consisting of $N$ samples drawn identically from $\Pc$ and their corresponding labels.
+    Let $f$ be a classifier trained on dataset $\boldP$ drawn from $\Pc$ and their corresponding labels.
     Let $g$ be a classifier that is observed to agree (classify identically) with $f$ on $\boldP$ and disagree on a dataset $\boldQ$ drawn from $\Qc$.
-    If the rate which $g$ disagrees with $f$ on $n$ unseen samples from $\Qc$ is greater than that from $n$ unseen samples from $\Pc$ w.p. greater than $p^\star \coloneqq \frac{1}{2}\left(1- 4^{-n} \binom{2n}{n}\right)$ there must be covariate shift.
+    If the rate which $g$ disagrees with $f$ on $n$ unseen samples from $\Qc$ is greater than that from $n$ unseen samples from $\Pc$ with probability greater than $p^\star \coloneqq \frac{1}{2}\left(1- 4^{-n} \binom{2n}{n}\right)$ there must be covariate shift.
 \end{theorem}
 \textit{Sketch of Proof}.
 We show that under the null hypothesis where $\Pc = \Qc$ the tightest upper bound on the probability that $g$ is more likely to disagree on $\Qc$ compared to $\Pc$ is $p^\star$.
@@ -262,67 +272,104 @@ Our theory, while simple, has a limitation that prevents its direct application.
 Any approach that requires unseen samples from $\boldQ$ is ill-suited for the low data regime, as it requires splitting $\boldQ$ leaving an even smaller set
 for computing the disagreement rate.
 Estimators from small samples result in high variance and ultimately low statistical power.
-Since our objective is to detect covariate shift from as few test samples as possible, splitting $\boldQ$ is not a good option.
-To tackle this issue practically, we take a transductive approach based on intuition from learning theory: creating learning models to disagree on samples from $\boldQ$ while generalizing to $\Rc$ is a far easier task when $\Qc$ is not in $\Rc$.
-We can therefore use the \emph{relative increase} in disagreement between CDCs on $\boldQ$ and $\boldP$ to capture a quantity that is nearly as informative as the unbiased statistic without reducing samples from $\boldQ$ that we can use.
+Furthermore for small samples sizes the ability to find the classifier $g$ that meets of predicate of \autoref{th:dis} becomes incredibly difficult.
+Since our objective is to detect covariate shift from as few test samples as possible, splitting $\boldQ$ and computing disagreement on unseen data will not result in a powerful test.
+To tackle this issue practically, we take a transductive approach based on intuition from learning theory and observed dynamics of CDC learning.
+We claim that training learning models to disagree on samples from $\boldQ$ while generalizing to $\Rc$ is a \textit{far easier} task when $\Qc$ is not in $\Rc$.
+Easiness in this setting is captured by the fact that standard learning algorithms tend to converge significantly quicker to the CDC objective when $\Pc \neq \Qc$.
+We can therefore use the \emph{relative increase} in disagreement between CDCs \textit{during training} on $\boldQ$ and $\boldP$ to capture a quantity that is more informative than the unbiased statistic without reducing samples from $\boldQ$ that we can use.
 
 
 \section{The Detectron Test}\label{sec:the-detectron-test}
 
-Our proposed method is to train two CDC ensembles; $\mathbf{g}_{\boldQ}=\{g_{\boldQ_1},\ldots {g}_{\boldQ_\aleph}\}$ and $\mathbf{g}_{\Pun}=\{g_{\Pun_1},\ldots g_{\Pun_\aleph}\}$.
-First, $g_{\boldQ}$ is trained to disagree with $f$ on $\boldQ$, while still learning the original training objective.
-Next, enforcing the null hypothesis, we train $g_{\Pun}$ to disagree on set of unseen samples $\Pun$ drawn from $\Pc$ where $n\coloneqq|\Pun|=|\boldQ|$.
-To maximize sample efficiency, we take a transductive approach to detecting shift by analyzing the outputs of $g_{\boldQ}$ and $g_{\boldP}$ on the sets $\boldQ$ and $\Pun$ themselves.
-We define the ratio of $d/n$ samples that $g_{\Pun}$ disagrees on with respect to $f$ as $\phi_{\boldP}$, and similarly for $g_{\boldQ}$ as $\phi_{\boldQ}$.
+\subsection{Detectron Disagreement}
+Our proposed method is to train two CDC ensembles of size $\aleph$
+denoted by $\mathbf{g}_{\boldQ}\coloneqq \{g_{\boldQ}^1,\ldots {g}_{\boldQ}^\aleph\}$ and $\mathbf{g}_{\Pun}\coloneqq \{g_{\Pun}^1,\ldots g_{\Pun}^\aleph\}$.
+First, $g_{\boldQ}$ is trained to disagree with $f$ on $\boldQ$, while constrained to agree on the original training set $\boldP$.
+Next, enforcing the null hypothesis, we train $\mathbf{g}_{\Pun}$ to disagree on set of \textbf{unseen samples} $\Pun$ drawn from $\Pc$ where $m\coloneqq|\Pun|=|\boldQ|$.
+To maximize sample efficiency, we take a transductive approach to detecting shift by analyzing the outputs of $\mathbf{g}_{\boldQ}$ and $\mathbf{g}_{\boldP}$ on the sets $\boldQ$ and $\Pun$ themselves by
+calculating their \textit{empirical disagreement} during training.
+
+We define the empirical disagreement between a base classifier $f$, an ensemble of classifiers $\mathbf{g}\coloneqq \{g^1,\dots,g^\aleph \}$, and an unlabeled dataset $\mathbf{D}\coloneqq \{x_i\}_{i=1}^n$ as the proportion of samples in $\mathbf{D}$
+where any $g\in \mathbf{g}$ predicts differently from $f$:
 \begin{equation}
-    \phi_{\mathbf{D}} \coloneqq \frac{1}{|\mathbf{D}|} \sum_{x\in \mathbf{D}} (1-[g_i(x) = g_j(x)\ \ \forall\ g_i,g_j \in \mathbf{g}_{\mathbf{D}}])
+    \phi_{\mathbf{D}}(f,\mathbf{g}) \coloneqq \frac{1}{|\mathbf{D}|} \sum_{x\in \mathbf{D}} \left(1-\mathbb{I}\left[\bigwedge\limits_{g\in \mathbf{g}} \hat{f}(x)=\hat{g}(x)\right]\right)
 \end{equation}
-Note that $\phi_{\boldP}$ and $\phi_{\boldQ}$ are themselves random variables that are sampled using a deterministic the function of the CDC learning algorithm applied to randomly sampled learning sets $\Pun$ and $\boldQ$.
-Under the null hypothesis, if $\Qc$ is not a harmful shift from $\Pc$, we have $\mathcal{H}_0: \mathbb{E}[\phi_\boldQ] \leq \mathbb{E}[\phi_\boldP]$ meaning that CDCs are at least as consistent on sets $\boldQ$ compared to $\Pun$.
-The converse of harmful shift is expressed as the one-sided alternative $\mathcal{H}_a: \mathbb{E}[\phi_\boldQ] > \mathbb{E}[\phi_\boldP]$, meaning $g_{\boldQ}$ is expected to disagree on more samples than $g_{\Pun}$.
-See \autoref{fig:harmfulshift} for a visual depiction of CDC training when applied to a near distribution shift benchmark.
+The fraction of samples that $\mathbf{g}_{\Pun}$ disagrees on with respect to $f$ on $\Pun$ is denoted using shorthands $\phi_{\Pun}\coloneqq \phi_{\Pun}(f, \mathbf{g}_{\Pun})$,
+and similarly for $g_{\boldQ}$ as $\phi_{\boldQ}$.
+Note that $\phi_{\Pun}$ and $\phi_{\boldQ}$ are random variables that obey intractable distributions governed by the dynamics of the CDC learning algorithm and disagreement sets $\Pun$ and $\boldQ$.
+The observed low variance and large divergence between the distributions of $\phi_{\Pun}$ and $\phi_{\boldQ}$ under covariate shift forms the backbone the \method test.
+Under the null hypothesis $\mathcal{H}_0$, if $\Qc$ is not a harmful shift from $\Pc$,
+then the intuition we have built suggests that $\phi_{\boldQ}$ will not grow more rapidly than $\phi_{\Pun}$
+\begin{equation}
+    \mathcal{H}_0: \mathbb{E}[\phi_\boldQ] \leq \mathbb{E}[\phi_\Pun], \quad  \mathcal{H}_a: \mathbb{E}[\phi_\boldQ] > \mathbb{E}[\phi_\Pun]
+    \label{eq:harmfulshifttest}
+\end{equation}
+The converse of harmful shift is expressed as the one-sided alternative $\mathcal{H}_a$, meaning disagreeing on $\boldQ$ \textit{is easier} than $\Pun$.
+See \autoref{fig:harmfulshift} for a visual depiction of CDC training dynamics when applied to the near distribution shift benchmark CIFAR 10/10.1~\citep{cifar101}.
 
 \begin{figure}[!htb]
     \floatbox[{\capbeside\thisfloatsetup{capbesideposition={right,top},capbesidewidth=0.4\linewidth}}]{figure}[\FBwidth]
-    {\caption{\footnotesize \textbf{CDC Training Dynamics:} In blue we train CDCs to disagree on a set of 100 samples from CIFAR 10.1~\citep{cifar101} ($\boldQ$) -- a near OOD test set for CIFAR 10 -- while in black
+    {\caption{\small \textbf{CDC Training Dynamics:} In blue we train CDCs to disagree on a set of 100 samples from CIFAR 10.1~\citep{cifar101} ($\boldQ$) -- a near OOD test set for CIFAR 10 -- while in black
     we force CDCs to disagree on the original CIFAR 10 test set ($\Pun$).
-    We see that even after a small number of training batches the disagree on a significantly larger portion of CIFAR 10.1 compared to CIFAR 10}
+    Even after a small number of training batches the empirical disagreement rate grows significantly larger CIFAR 10.1 compared to CIFAR 10.
+    The observation that CIFAR 10.1 results in more predictive variance under the CDC algorithm suggest that this covariate shift is harmful}
     \label{fig:harmfulshift}}
     {\includegraphics[width=\linewidth]{images/training_cdcs_small.pdf}}
 \end{figure}
-
-\noindent
-We refer to this test as \textit{\method\ Disagreement}.
+We refer to the test in \autoref{eq:harmfulshifttest} as \textit{\method\ Disagreement} (Det-D).
 To compute the test result at a significance level $\alpha$ we first estimate the null distribution of $\phi_\boldP$ for a fixed sample size $n$ by training $K$ calibration rounds of $g_{\boldP}$ with different random sets $\Pun$ of size $n$.
 The test result is significant if the observed disagreement rate $\phi_{\boldQ}$ is greater than the $(1-\alpha)$ quantile of the null distribution.
+This process is explained visually in \autoref{fig:detectron_permutation}.
 
 \begin{figure}[!htb]
     \centering
     \includegraphics[width=\linewidth]{images/detectron_permutation.pdf}
-    \caption{\textbf{The \method\ disagreement test:} In this example (taken from our experiment where $\Pc\ =\ $CIFAR10 and $\Qc\ =\ $CIFAR10.1 and sample size $N=50$) pictured we start by
-    training an ensemble of CDCs (we use and ensemble size of $5$) to reject/disagree on a set of $N$ unseen samples from the original training distribution ($\Pun$) while constrained to perform consistently with a base model on the original training and validation sets used to train the base model on CIFAR10. We perform 100 of these calibration runs using different random seeds and samples for $\Pun$ to estimate a threshold $\tau$ such that $95\%$ of the runs reject fewer then $\tau$ samples --- thereby fixing the significance level of the test to $5\%$. To estimate the test power, we train CDCs using \textbf{the exact same configuration} as the calibration runs except we replace $\Pun$ with a random set of $N$ samples $\boldQ$ from $\Qc$ (CIFAR 10.1). By averaging the number of runs the reject more than $\tau$ samples we can compute the power (or true positive rate) of the test for the configuration.}
+    \caption{\small \textbf{The \method\ Disagreement Test:} (taken from our experiment where $\Pc\ =\ $CIFAR 10 and $\Qc\ =\ $CIFAR 10.1 and sample size $n=50$) We start by
+    training an ensemble of CDCs (we use and ensemble size of $5$) to disagree on a set of $n$ unseen samples $\Pun$ from the original training distribution
+    while constrained to perform consistently with a base model on the original training and validation sets used to train the base model on CIFAR 10.
+    We perform 100 of these calibration runs using different random seeds and samples for $\Pun$ to estimate a threshold $\tau$ such that $95\%$
+        of the runs disagree on fewer than $\tau$ samples --- thereby fixing the significance level of the test to $5\%$.
+        To estimate the test power, we train CDCs using \textbf{the exact same configuration} as the calibration runs except we replace $\Pun$ with a random set of $n$ samples $\boldQ$ from $\Qc$ (CIFAR 10.1).
+        By averaging the number of runs that disagree on more than $\tau$ samples from $\boldQ$ we can compute the power (or true positive rate) of the test as $83\%$.}
     \label{fig:detectron_permutation}
 \end{figure}
 
-We consider an additional variant, \textit{\method\ Entropy} (DE), which computes the prediction entropy of each sample under the CDC instead of relying solely on disagreement rates.
-The intuition for DE draws from the fact that when CDCs satisfy their objective (i.e., in the case of harmful shift) they
+\subsection{Detectron Entropy}
+We consider an additional variant, \textit{\method\ Entropy} (Det-E), which computes the mean prediction entropy of the CDC instead of relying solely on disagreement rates.
+The intuition for Det-E draws from the fact that when CDCs satisfy their objective (i.e., in the case of harmful shift) they
 learn to predict with high entropy on $\boldQ$ and low entropy on $\Pun$, resulting in a natural way to distinguish between distributions.
-The CDC entropy is computed from the mean probabilities over each $N$ classes of the base classifier $f$ and set of $k$ CDCs $g_1,\dots,g_k$.
+The CDC entropy is computed for a sample $x$ from the mean probabilities over each $N$ classes of the base classifier $f$ and set of CDCs $\mathbf{g}$.
 \begin{equation}
-    \text{CDC}_{\text{entropy}}(x)=-\sum_{c=1}^N {\hat{p}_c\log(\hat{p}_c)}\ \text{ where }\ \hat{p} \coloneqq \frac{1}{k+1}\left(f(x) + \sum_{i=1}^k g_i(x)\right)
+    \text{CDC}_{\text{entropy}}(x)=-\sum_{c=1}^N {\hat{p}_c\log(\hat{p}_c)}\ \text{ where }\ \hat{p}_c \coloneqq \frac{1}{|\mathbf{g}|+1}\left(f(x)_c + \sum_{g\in \mathbf{g}} g(x)_c \right)
     \label{eq:cdc_entropy_def}
 \end{equation}
-We use a KS test to compute a $p$-value for covariate shift directly on the entropy distributions computed for $\boldQ$ and $\Pun$ and guarantee significance using the same strategy as above.
+We use a KS test to compute a $p$-value for covariate shift directly on the entropy distributions computed for $\boldQ$ and $\Pun$ and guarantee significance using the same strategy as Det-D
+(This process is explained visually in \autoref{fig:entropy_test}).
 The intuition for \textit{\method\ (Entropy)} draws from the fact that when CDCs satisfy their objective (i.e., in the case of harmful shift) they
 learn to predict with high entropy on $\boldQ$ and low entropy on $\Pun$, resulting in a natural way to distinguish between distributions.
 
 \begin{figure}[!htb]
     \centering
     \includegraphics[width=\linewidth]{images/entropy_test.pdf}
-    \caption{\textbf{The \method\ entropy test:} Following the same experimental setup as \autoref{fig:detectron_permutation}, we start (left) by computing a KS test between the continuous entropy values for each calibration run $\Pun$ with the flattened set of entropy values from all other 99 calibration runs. Then (center) we compute a KS test from each test run $\boldQ$ with a random set of all but one calibration runs. Finally (right), we find a threshold $\tau$ on the distribution of $p$-values obtained from step 1 as the $\alpha$ quantile to guarantee a false positive rate of $\alpha$. The power of the test is computed as the fraction of $p$-values computed from 100 test runs $\boldQ$ that are below $\tau$.}
+    \caption{\small \textbf{The \method\ Entropy Test:} Following the same experimental setup as \autoref{fig:detectron_permutation},
+        we start (left) by computing a KS test between the empirical distributions entropy values for each calibration run $\Pun$ with the flattened set of entropy values from all other calibration runs.
+        Then (center) we compute a KS test from each test run $\boldQ$ with a random set of all but one calibration runs.
+        Finally (right), we find a threshold $\tau$ on the distribution of $p$-values obtained from step 1 as the lower $\alpha$ quantile to guarantee a false positive rate of $\alpha$.
+        The power of the test is computed as the fraction of $p$-values computed from the test runs on $\boldQ$ that are below $\tau$.}
     \label{fig:entropy_test}
 \end{figure}
 
+\subsection{The Detectron Algorithm}
+Concluding our methodology, we present a formal algorithmic description of the Detectron Disagreement test below in \autoref{alg:detectron}.
+We release our code as open source software under a GNU General Public License v3.0.
+\vspace{-4mm}
+\begin{center}
+    \href{https://github.com/tomginsberg/deeptst}{\includegraphics[width=.4\linewidth]{images/logo.pdf}}\\
+    \vspace{-8mm}
+    \url{https://github.com/tomginsberg/deeptst}
+\end{center}
+\vspace{-5mm}
 \begin{algorithm}[!htbt]
     \DontPrintSemicolon
     \SetAlgoLined
@@ -335,30 +382,30 @@ learn to predict with high entropy on $\boldQ$ and low entropy on $\Pun$, result
     \BlankLine
     $\boldP_{\text{train}},\ \boldP_{\text{val}},\ \Pun\ \gets\ \text{Partition}(\boldP)$
 
-    $N\ \gets\ |\boldQ|$;\ $\Phi_{\boldP} \gets [\ ]$
+    $m\ \gets\ |\boldQ|$;\ $\Phi_{\Pun} \gets [\ ]$
 
     $f\ \gets\ {L}(\boldP_{\text{train}},\ \boldP_{\text{val}})$\ \tcp*{ Load or train a base classifier on $\boldP$}
 
     \Repeat{K iterations elapse}{
-        $\mathbf{p}^\star\ \gets\ \text{ RandomSample}(\Pun, N)$
+        $\mathbf{p}^\star\ \gets\ \text{ RandomSample}(\Pun, m)$
 
         \tcp{ Train an ensemble of CDCs on $\Pun$}
-        \While{$n>0$ and iterations $\leq \aleph$}{
-            $g\ \gets\ \text{ConstrainedDisagreement}({L}, \boldP_{\text{train}}, \boldP_{\text{val}}, \mathbf{p}^\star, f)$ \tcp*{See Appendix TODO}
+        \While{$|\mathbf{p}^\star|>0$ and iterations $\leq \aleph$}{
+            $g\ \gets\ \text{ConstrainedDisagreement}({L}, \boldP_{\text{train}}, \boldP_{\text{val}}, \mathbf{p}^\star, f)$ \tcp*{See \autoref{alg:constrained}}
 
             $\mathbf{p}^\star \ \gets\ \{x\ |\ x\in \mathbf{p}^\star\text{ and } f(x)=g(x)\}$\tcp*{Filter out disagreed on data}
 
-            $\phi_\boldP \ \gets 1-|\mathbf{p}^\star|/N$
+            $\phi_\Pun \ \gets 1-|\mathbf{p}^\star|/m$
             \tcp*{Update disagreement rate}}
 
         $\text{Append}\ \phi_{\boldP}\text{ to }\Phi_\boldP$}
     \tcp{ Train an ensemble of CDCs on $\boldQ$}
-    \While{$n>0$ and iterations $\leq \aleph$}{
+    \While{$\boldQ>0$ and iterations $\leq \aleph$}{
         $g\ \gets\ \text{ConstrainedDisagreement}({L}, \boldP_{\text{train}}, \boldP_{\text{val}}, \boldQ, f)$
 
         $\boldQ\ \gets\ \{x\ |\ x\in \boldQ\text{ and } f(x)=g(x)\}$
 
-        $\phi_\boldQ \ \gets 1-|\boldQ|/N$
+        $\phi_\boldQ \ \gets 1-|\boldQ|/m$
     }
-    \Return{$\phi_\boldQ > \left[{(1-\alpha)}\text{ quantile of }\Phi_\boldP \right]$}
+    \Return{$\phi_\boldQ > \left[{(1-\alpha)}\text{ quantile of }\Phi_\Pun \right]$}
 \end{algorithm}

@@ -3,7 +3,7 @@ during training $p_{\text{train}}(x)$ while the underlying prediction concept $y
 \[p_{\text{train}}(x)\neq p_{\text{test}}(x) \text{ while } p_{\text{train}}(y|x)=p_{\text{test}}(y|x)\]
 The problem of detecting variate shift is important at a fundamental level in machine learning.
 From a classical learning theory perspective, predictive ML algorithms that operate on unseen data
-can only claim any performance guarantees when such data is exchangeable with the labeled samples which they were tested on~\citep{Haussler90probablyapproximately}.
+can only claim reasonable performance guarantees when such data is exchangeable with the labeled samples which they were trained and tested on~\citep{Haussler90probablyapproximately}.
 The violation of this assumption in general is known as distribution shift.
 However, in a typical deployment setting where only covariates are observed one cannot detect changes in $p(y)$ or $p(y|x)$ leaving covariate shift as the only remaining phenomenon identifiable from data.
 The related problems of \textit{label shift} ({shift in $p(y)$}) and \textit{concept shift} (shift in $p(y|x)$) pose an additional problems for maintaining the robustness of deployed ML systems, but are not the topic of this work.
@@ -17,9 +17,9 @@ The problem of detecting when two distributions $\Pc$ and $\Qc$ over $\mathcal{X
 The general problems seeks to rule out a \textit{null hypothesis} $\mathcal{H}_0:\ \Pc=\Qc$ in favor of an alternative $\mathcal{H_a}:\ \Pc\neq \Qc$ at a given significance level $\alpha$.
 The significance level is equivalent to the false positive rate or probability of making a type I error, which fixes a threshold for the test such that when $\Pc=\Qc$, $\mathcal{H}_0$ is ruled out with probability no more than $\alpha$.
 The power of a statistical test, often denoted as $1-\beta$ where $\beta$ is the probability of making a type II error, is the probability that the test correctly rules out $\mathcal{H}_0$ while still maintaining a significance level of $\alpha$.
-Will less standard in statistics literature, it is natural to measure the area under the receiver operating characteristics (AUROC) as area under curve $1-\beta$ as a function of $\alpha$ for $\alpha\in [0,1]$.
+While less standard in statistics literature, it is natural to measure the area under the receiver operating characteristics (AUROC) as area under curve $1-\beta$ as a function of $\alpha$ for $\alpha\in [0,1]$.
 For a more rigours mathematical underpinning of two sample testing see section 2.1 in ~\citeauthor{twosampletestingbackground}.
-In the following subsections we highlight several important approaches to two sample testing that will form underpinnings of much of the later methodologies.
+In the following subsections we highlight several important approaches to two sample testing that will be used in much of the later methodologies.
 
 \smallbreak
 \subsection*{Kolmogorov–Smirnov test} An elegant and robust two sample test that requires no assumptions on the distributions $\Pc$ and $\Qc$ besides $\mathcal{X}=\mathbb{R}$ is the {Kolmogorov–Smirnov test} (KS test)~\citep{kolmogorov1933sulla}.
@@ -52,11 +52,11 @@ A shortcoming of the KS test is that it sacrifices statistical power in order to
 the binomial test is one such example.
 The test considers a binomially distributed random variable $X$ with unknown rate $q$ i.e., $X\sim \text{Binomial}(n, q)$ for which we observe a single sample $x$ (hence $\mathcal{X}=\{0,\ldots, n\}$).
 Since the binomial distribution is defined as a sum of i.i.d.\ Bernoulli random variables with the same rate, $x$ may equivalently be interpreted as a set of $n$ samples of which $x$ are $1$ and $n-x$ are $0$.
-We wish to either confirm or rule out that $X$ was sampled from a baseline binomial distribution with known rate $p$.
+We wish to either confirm or rule out that $x$ was sampled from a baseline binomial distribution with known rate $p$.
 We do this by computing the probability of observing an event at least as rare as $X=x$ under the null hypothesis that $p=q$.
 This quantity can be computed exactly using the symmetry of the binomial distribution.
 \begin{align*}
-    \mathbb{P}_{X\sim \text{Bin}(n, p)}(X \text{ is rarer then } x) &= 2\times \mathbb{P}_{X\sim \text{Bin}(n, p)}(X \geq x)\\
+    \mathbb{P}_{X\sim \text{Bin}(n, p)}(X \text{ as least as rare as } x) &= 2\times \mathbb{P}_{X\sim \text{Bin}(n, p)}(X \geq x)\\
     &= 2 \sum_{k=x}^{n} \mathbb{P}[X=k] \\
     &= 2 \sum _{k=x}^n (1-p)^{n-k} p^k \binom{n}{k} = 2\frac{B_p(x,n-x+1)}{B(x,n-x+1)}
 \end{align*}
@@ -69,12 +69,13 @@ in favor of it being biased towards heads.
 Do to the simple structure of the binomial test one can derive a simple summation formula for computing the
 exact statistical power as a function of $n$, $p$, $q$ and the significance level $\alpha$.
 This quantity corresponds to the probability of observing a $p$-value of less than or equal to $\alpha$ when running a
-binomial test on a
+binomial test on sample from a random variable $X\sim \text{Bin}(n,q)$ against a baseline rate $p$.
 \begin{align*}
     \mathbb{P}_{Y\sim \text{Bin}(n, q)} \left( \mathbb{P}_{X\sim \text{Bin}(n, p)}(X \geq Y) \leq \frac{\alpha}{2} \right)&= \mathbb{P}_{Y\sim \text{Bin}(n, q)}\left(  \sum_{k=k}^n \binom{n}{k} (1-p)^{n-k} p^k  \leq \frac{\alpha}{2} \right)\\
-    &= \mathbb{E}_{Y\sim \text{Bin}(n, q)}\left(  \left[\sum_{k=k}^n \binom{n}{k} (1-p)^{n-k} p^k  \leq \frac{\alpha}{2}\right] \right)\\
-    &= \sum_{y=0}^n \binom{n}{y} \left[  \sum_{k=y}^n \binom{n}{k} (1-p)^{n-k} p^k \leq \frac{\alpha}{2} \right] q^y (1-q)^{n-y}
+    &= \mathbb{E}_{Y\sim \text{Bin}(n, q)}\left(  \mathbb{I}\left[\sum_{k=k}^n \binom{n}{k} (1-p)^{n-k} p^k  \leq \frac{\alpha}{2}\right] \right)\\
+    &= \sum_{y=0}^n \binom{n}{y} \mathbb{I}\left[  \sum_{k=y}^n \binom{n}{k} (1-p)^{n-k} p^k \leq \frac{\alpha}{2} \right] q^y (1-q)^{n-y}
 \end{align*}
+We use $\mathbb{I}[\cdot]$ as a binary indicator.
 We verify this formula using a simple monte carlo simulation with $p=.5$, $q=.6$, $n=100$ and $\alpha=0.05$.
 The statistical power and standard error estimated over $10,000$ draws gives $0.461\pm 0.005$ whereas the above summation yields a value of $0.4621$.
 One important note is that under this simple construction the binomial test is not a two sample test, but merely a single sample test.
@@ -116,11 +117,10 @@ In the context of two sample testing $T$ maps a set $\boldP$ and $\boldQ$ to a r
 of the distributional difference between $\Pc$ and $\Qc$ based on the finite sample observations.
 To construct a one-sided two sample test with $T$ we must first determine a significance threshold $\tau$ such that when $\Pc=\Qc$ we have a probability of at least $1-\alpha$
 that $T(\boldP, \boldQ) < \tau$ (or $T(\boldP, \boldQ) > \tau$ depending on the direction of the test).
-To estimate $\tau$ we take advantage of the exchangability of samples under $\mathcal{H}_0$.
+To estimate $\tau$ we take advantage of the exchangeability of samples under $\mathcal{H}_0$.
 If indeed $\Pc=\Qc$ then it should not matter which group of the total $n+m$ samples we call $\boldP$ and which we call $\boldQ$, so the strategy is to
 combine, permute and redivide $\boldP$ and $\boldQ$ and feed them into $T$ many times, computing $\tau$ as the $1-\alpha$ quantile of all observations of the test statistic.
 If the test performed on the original partitions exceeds $\tau$ (e.g., $T(\boldP, \boldQ) \geq \tau$) we can rule out $\mathcal{H}_0$ with an exact significance level $\alpha$.
-We can compute the power of the test at the level
 We note that as we are estimating $\tau$ from finite data, it itself incurs statistical estimation error which in turn adjusts the true significance level of a test~\citep{NEURIPS2019_8fb21ee7}.
 This is a minor detail which is ignored by several modern approaches for two sample testing that employ permutation tests~\citep{liu2020learning, zhao2022comparing}.
 
@@ -128,8 +128,8 @@ This is a minor detail which is ignored by several modern approaches for two sam
 \section{Approaches for High Dimensional Data}\label{sec:cov-high-dimensions}
 \subsection*{Dimensionality Reduction Approaches}
 Many methods for detecting shift in high-dimensional data simply apply dimensionality reduction (DR) techniques followed by standard two sample tests~\citep{failloud}.
-\citeauthor{failloud} perform an evaluation on several DR techniques including, PCA, random feature projections, train and untrained auto-encoders and the output features of a classification model.
-They on each DR they test the performance of univariate KS-tests on each dimension of the reduced data distribution aggregated using Bonfferoni correction as well as MMD using the squared exponential kernel.
+\citeauthor{failloud} perform an evaluation on several DR techniques including, PCA, random feature projections, trained and untrained auto-encoders and the output features of a classification model.
+On each DR method they test the performance of univariate KS-tests on each dimension of the reduced data distribution aggregated using Bonfferoni correction as well as MMD using the squared exponential kernel.
 \citeauthor{failloud}'s main takeaway is that using the softmax outputs of a pretrained classifier as low dimensional representations for performing KS-tests, a method known as black box
 shift detection (BBSD)~\citep{bbsd}, is effective at confidently identifying several synthetic covariate shifts in imaging data (e.g., crops, rotations) given approximately 200 i.i.d samples.
 However, applying statistical tests to non-invertible representations of data can never guarantee to capture arbitrary covariate shifts, as there may always exist multiple distributions that collapse to
@@ -190,11 +190,16 @@ Furthermore, the majority of methods in this space have been designed exclusivel
 
 Despite these shortcomings, OOD methods can be readily applied for the problem of covariate shift detection under the same principle that governs Integral Probability Metrics (IPMs)~\citep{IPMS}; namely that if two
 distributions are identical, any function should have the same expectation under both distributions.
+Hence testing for a difference in expected OOD scores between a source and target dataset is a valid hypothesis test for covariate.
+However, as OOD scores are designed to only look at a single sample level, instead of treating a set of samples as a whole one would not expect such a test to yield high statistical power for near distribution shifts.
 
 
 \section{Uncertainty Estimation}\label{sec:uncertainty-estimation}
 Related to OOD, uncertainty estimation concerns developing models that identify sources of uncertainty in their predictions~\citep{ensemble, trustuncert}.
-Naturally, uncertainty should be large when samples are OOD, however ~\citep{trustuncert} perform a large-scale empirical comparison of uncertainty estimation methods and find that while deep ensembles generally provide the best results, the quality of uncertainty estimations, regardless of method, consistently degrades with increasing covariate shift.
+A non exhaustive list of approaches to model uncertainty using predictive models are Gaussian Processes~\citep{williams1995gaussian}, measuring the
+predictive variance or entropy of Deep Ensembles~\citep{ensemble} or Monte Carlo Dropout~\citep{dropout}, Bayesian Neural Networks~\citep{baysneural}, and Evidential Learning~\citep{evidential, evclass}.
+Naturally, uncertainty should be large when samples are OOD implying that one could consider testing for covariate shift using the same principle as identified for OOD scores.
+However, ~\citep{trustuncert} perform a large-scale empirical comparison of uncertainty estimation methods and find that while deep ensembles generally provide the best results, the quality of uncertainty estimations, regardless of method, consistently degrades with increasing covariate shift.
 
 
 \section{Selective Classification and PQ Learning}\label{sec:selective-classification-and-pq-learning}

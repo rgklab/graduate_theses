@@ -18,7 +18,6 @@
 
 % Document
 \begin{document}
-
     \maketitle
     \begin{abstract}
         The ability to quickly and accurately identify covariate shift at test time is a critical and often overlooked component of safe machine learning systems deployed in high-risk domains.
@@ -27,7 +26,7 @@
         We go on to provide a new definition for \textit{harmful covariate shift} ({\small HCS}) that goes beyond ideas from standard learning theory to give a richer insight on when covariate shift may hurt the performance of classification models.
         Motivated from our definition, we propose a method, the Detectron, to detect {\small HCS} based on the discordance between an ensemble of \textit{constrained disagreement classifiers} (CDCs)  trained to agree on training data and disagree on test data.
         We derive a loss function for training CDCs and show that their disagreement rate and predictive entropy represent powerful discriminative statistics for {\small HCS}.
-        Furthermore, we present tight finite sample shift detection guarantees in an idealized setting.
+%        Furthermore, we present tight finite sample shift detection guarantees in an idealized setting.
         Empirically, we demonstrate that the CDC learning algorithm produces model with behaviour that aligns well with our desideratum.
         Finally we showcase the ability of the Detectron to detect {\small HCS} with statistical certainty on a variety of high-dimensional datasets.
         Across numerous domains and modalities, we show state-of-the-art performance compared to existing methods, particularly when the number of observed test samples is small.
@@ -41,7 +40,7 @@
         help brainstorming ideas, useful feedback, research advice, squash playing and all
         around creation of an amazing lab environment.
         Additional thanks to others that provided helpful advice and feedback include:
-        Edward De Brouwer, Aslesha Pokhrel, Zhongyuan Liang, Adnan Mohd, Ian Shi, and Stephan Rabanser.
+        Edward De Brouwer, Aslesha Pokhrel, Zhongyuan Liang, Adnan Mohd, Ian Shi, Asic Chen and Stephan Rabanser.
     \end{acknowledgements}
     \tableofcontents
     \listoftables
@@ -57,7 +56,7 @@
 
     \input{background}
 
-    \chapter[Detectron: Methodlogy]{The Detectron: Identifying Harmful Covariate Shift based on Classifier Disagreement}\label{ch:detectron}
+    \chapter[Methodology: The Detectron]{Methodology: The Detectron}\label{ch:detectron}
 
     \input{detectron}
 
@@ -88,6 +87,12 @@
     \section{Proofs}\label{sec:proofs}
     \input{proofs}
 
+    \section{Constrained Disagreement Details}
+    \label{sec:cons_dis_det}
+    \input{constrained_dis.tex}
+
+    \section{Experimental Details}
+    \label{sec:expdet}
     \input{datasets_and_experimental_details}
 
 
