@@ -1,7 +1,9 @@
-    \begin{manualtheorem}{1}[Disagreement implies covariate shift]
-    Let $f$ be a classifier trained on dataset $\boldP$ consisting of $N$ samples drawn identically from $\Pc$ and their corresponding labels.
-    Let $g$ be a classifier that is observed to agree (classify identically) with $f$ on $\boldP$ but and disagree on a dataset $\boldQ$ drawn from $\Qc$.
-    If the rate which $g$ disagrees with $f$ on $n$ unseen samples from $\Qc$ is greater then that from $n$ unseen samples from $\Pc$ w.p greater than $p^\star \coloneqq \frac{1}{2}\left(1- 4^{-n} \binom{2n}{n}\right)$ there must be covariate shift.
+Below are the full proofs for Theorem 1 and 2 from \autoref{sec:from-constrained-disagreement-to-detecting-shift-with-hypothesis-tests}.
+
+\begin{manualtheorem}{1}[Disagreement implies covariate shift]
+  Let $f$ be a classifier trained on dataset $\boldP$ drawn from $\Pc$ and their corresponding labels.
+    Let $g$ be a classifier that is observed to agree (classify identically) with $f$ on $\boldP$ and disagree on a dataset $\boldQ$ drawn from $\Qc$.
+    If the rate which $g$ disagrees with $f$ on $n$ unseen samples from $\Qc$ is greater than that from $n$ unseen samples from $\Pc$ with probability greater than $p^\star \coloneqq \frac{1}{2}\left(1- 4^{-n} \binom{2n}{n}\right)$ there must be covariate shift.
 \end{manualtheorem}
 \begin{proof}
     Let $R_P=\emptyset^{P}_1+ \ldots+ \emptyset^P_n$ where each $\emptyset^P_i$ is an i.i.d Bernoulli random variable that describes the probability of $g$ disagreeing with $f$ on an unseen sample from $\Pc$.

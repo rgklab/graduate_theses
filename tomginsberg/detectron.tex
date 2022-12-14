@@ -16,7 +16,7 @@ compared to $\Qc$; motivated by the setting where we wish to detect shift quickl
 (2) we have access to a robust classifier $f$ that performs \textit{reasonably well} (e.g. could realistically be deployment) on held out samples from $\Pc$ as well as the learning algorithm $L$ used to train it.
 (3) We seek to only detect shifts that could reduce classification robustness of $f$ --- we refer to this shift characterization \textit{harmful covariate shift} and elaborate on it in the next section.
 
-
+\clearpage
 \section{Harmful Covariate Shift}\label{sec:harmful-covariate-shift} A shift in the data distribution is not always harmful.
 In many practical problems, a practitioner may use domain knowledge to embed invariances with the explicit goal of ensuring the predictive performance of a classifier does not, by construction, change under certain shifts.
 This may be done directly via translation invariance in convolutional neural networks, permutation invariance in DeepSets~\citep{deepsets} or indirectly via data augmentation or domain adaptation.
@@ -263,9 +263,8 @@ if we deem the probability to be greater than $p^\star$ there must be a covariat
 This result motivates a hypothesis testing approach to determine how probable it is that $g$ is truly more likely to disagree on $\Qc$ given only a set of finite observations.
 The full proof can be found in \autoref{sec:proofs}.
 
-
 \textit{Remark}.
-While \autoref{th:dis} takes a frequentist's approach to identifying covariate shift, we show in \autoref{sec:proofs} that there is a Bayesian formulation which can provide a closed-form and informative lower bound on the probability
+While \autoref{th:dis} takes a frequentist's approach to identifying covariate shift, we show in \autoref{sec:proofs} (Theorem 2) that there is a Bayesian formulation which can provide a closed-form and informative lower bound on the probability
 of covariate shift given an observation of finite sample disagreement rates on $\boldP$ and $\boldQ$.
 
 Our theory, while simple, has a limitation that prevents its direct application.
@@ -360,16 +359,17 @@ learn to predict with high entropy on $\boldQ$ and low entropy on $\Pun$, result
     \label{fig:entropy_test}
 \end{figure}
 
+\clearpage
 \subsection{The Detectron Algorithm}
 Concluding our methodology, we present a formal algorithmic description of the Detectron Disagreement test below in \autoref{alg:detectron}.
 We release our code as open source software under a GNU General Public License v3.0.
-\vspace{-4mm}
+\vspace{-5mm}
 \begin{center}
     \href{https://github.com/tomginsberg/deeptst}{\includegraphics[width=.4\linewidth]{images/logo.pdf}}\\
     \vspace{-8mm}
     \url{https://github.com/tomginsberg/deeptst}
 \end{center}
-\vspace{-5mm}
+
 \begin{algorithm}[!htbt]
     \DontPrintSemicolon
     \SetAlgoLined
